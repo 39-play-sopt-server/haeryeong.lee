@@ -41,8 +41,12 @@ public class Main {
   private void createPost() {
     String title = view.readTitle();
     String content = view.readContent();
-    controller.createPost(title, content);
-    view.printMessage("게시글이 작성되었습니다.");
+    try {
+      controller.createPost(title, content);
+      view.printMessage("게시글이 작성되었어요!");
+    } catch (IllegalArgumentException e) {
+      view.printMessage(e.getMessage());
+    }
   }
 
   private void readPosts() {
@@ -88,9 +92,13 @@ public class Main {
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    controller.updatePost(number, newTitle, newContent);
-
-    view.printMessage("게시글이 수정되었습니다.");
+    try {
+      controller.updatePost(number, newTitle, newContent);
+      view.printMessage("게시글이 수정되었어요!");
+    } catch (IllegalArgumentException e) {
+      view.printMessage(e.getMessage());
+      return;
+    }
   }
 
   private void deletePost() {

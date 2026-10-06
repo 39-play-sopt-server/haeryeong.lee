@@ -34,8 +34,7 @@ public class PostService implements PostUseCase {
     if (post.isEmpty()) {
       return false;
     }
-    post.get().updateTitle(title);
-    post.get().updateContent(content);
+    post.get().update(title, content);
     return true;
   }
 
