@@ -1,8 +1,10 @@
 package org.sopt.server.adapter.in;
 
 import java.util.List;
+import java.util.function.Supplier;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.domain.Category;
+import org.sopt.server.domain.exception.BaseException;
 
 public class PostController {
   private final PostUseCase postUseCase;
@@ -11,23 +13,44 @@ public class PostController {
     this.postUseCase = postUseCase;
   }
 
-  public void createPost(String title, String content, String category, String author) {
-    postUseCase.createPost(title, content, Category.from(category), author);
+  public BaseResponse<Void> createPost(
+      String title, String content, String category, String author) {
+    return handleVoid(
+        () -> postUseCase.createPost(title, content, Category.from(category), author));
   }
 
-  public List<PostResponse> getPosts() {
-    return postUseCase.getPosts().stream().map(PostResponse::from).toList();
+  public BaseResponse<List<PostResponse>> getPosts() {
+    return handle(() -> postUseCase.getPosts().stream().map(PostResponse::from).toList());
   }
 
-  public PostResponse getPost(int number) {
-    return PostResponse.from(postUseCase.getPost(number));
+  public BaseResponse<PostResponse> getPost(int number) {
+    return handle(() -> PostResponse.from(postUseCase.getPost(number)));
   }
 
-  public void updatePost(int number, String title, String content, String category) {
-    postUseCase.updatePost(number, title, content, Category.from(category));
+  public BaseResponse<Void> updatePost(int number, String title, String content, String category) {
+    return handleVoid(
+        () -> postUseCase.updatePost(number, title, content, Category.from(category)));
   }
 
-  public void deletePost(int number) {
-    postUseCase.deletePost(number);
+  public BaseResponse<Void> deletePost(int number) {
+    return handleVoid(() -> postUseCase.deletePost(number));
+  }
+
+  private <T> BaseResponse<T> handle(Supplier<T> action) {
+    try {
+      return BaseResponse.success(action.get());
+    } catch (BaseException e) {
+      return BaseResponse.failure(e.getErrorCode());
+    } catch (Exception e) {
+      return BaseResponse.failure(GlobalErrorCode.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private BaseResponse<Void> handleVoid(Runnable action) {
+    return handle(
+        () -> {
+          action.run();
+          return null;
+        });
   }
 }

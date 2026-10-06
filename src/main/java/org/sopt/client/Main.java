@@ -1,10 +1,10 @@
 package org.sopt.client;
 
 import java.util.List;
+import org.sopt.server.adapter.in.BaseResponse;
 import org.sopt.server.adapter.in.PostController;
 import org.sopt.server.adapter.in.PostResponse;
 import org.sopt.server.config.AppConfig;
-import org.sopt.server.domain.exception.BaseException;
 
 public class Main {
   private final PostView view;
@@ -36,8 +36,6 @@ public class Main {
           }
           default -> view.printMessage("잘못된 입력입니다.");
         }
-      } catch (BaseException e) {
-        view.printMessage(e.getMessage());
       } catch (NumberFormatException e) {
         view.printMessage("숫자를 입력해주세요.");
       }
@@ -49,14 +47,21 @@ public class Main {
     String author = view.readAuthor();
     String title = view.readTitle();
     String content = view.readContent();
-    controller.createPost(title, content, category, author);
+    if (isFailure(controller.createPost(title, content, category, author))) {
+      return;
+    }
     view.printMessage("게시글이 작성되었어요!");
   }
 
   private void readPosts() {
     view.printMessage("\n=== 게시글 목록 ===");
 
-    List<PostResponse> posts = controller.getPosts();
+    BaseResponse<List<PostResponse>> response = controller.getPosts();
+    if (isFailure(response)) {
+      return;
+    }
+
+    List<PostResponse> posts = response.data();
     if (posts.isEmpty()) {
       view.printMessage("게시글이 없습니다.");
       return;
@@ -73,7 +78,11 @@ public class Main {
 
     int number = view.readPostNumber("조회할 게시글 번호: ");
 
-    view.printPost(controller.getPost(number));
+    BaseResponse<PostResponse> response = controller.getPost(number);
+    if (isFailure(response)) {
+      return;
+    }
+    view.printPost(response.data());
   }
 
   private void updatePost() {
@@ -83,13 +92,17 @@ public class Main {
 
     int number = view.readPostNumber("수정할 게시글 번호: ");
 
-    controller.getPost(number);
+    if (isFailure(controller.getPost(number))) {
+      return;
+    }
 
     String newCategory = view.readCategory();
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    controller.updatePost(number, newTitle, newContent, newCategory);
+    if (isFailure(controller.updatePost(number, newTitle, newContent, newCategory))) {
+      return;
+    }
     view.printMessage("게시글이 수정되었어요!");
   }
 
@@ -100,15 +113,29 @@ public class Main {
 
     int number = view.readPostNumber("삭제할 게시글 번호: ");
 
-    controller.deletePost(number);
+    if (isFailure(controller.deletePost(number))) {
+      return;
+    }
     view.printMessage("게시글이 삭제되었습니다.");
   }
 
   private boolean hasNoPosts() {
-    if (controller.getPosts().isEmpty()) {
+    BaseResponse<List<PostResponse>> response = controller.getPosts();
+    if (isFailure(response)) {
+      return true;
+    }
+    if (response.data().isEmpty()) {
       view.printMessage("게시글이 없습니다.");
       return true;
     }
     return false;
+  }
+
+  private boolean isFailure(BaseResponse<?> response) {
+    if (response.success()) {
+      return false;
+    }
+    view.printMessage(response.message());
+    return true;
   }
 }
