@@ -39,10 +39,12 @@ public class Main {
   }
 
   private void createPost() {
+    String category = view.readCategory();
+    String author = view.readAuthor();
     String title = view.readTitle();
     String content = view.readContent();
     try {
-      controller.createPost(title, content);
+      controller.createPost(title, content, category, author);
       view.printMessage("게시글이 작성되었어요!");
     } catch (IllegalArgumentException e) {
       view.printMessage(e.getMessage());
@@ -58,7 +60,7 @@ public class Main {
       return;
     }
     for (int i = 0; i < posts.size(); i++) {
-      view.printMessage((i + 1) + ". " + posts.get(i).title());
+      view.printPostSummary(i + 1, posts.get(i));
     }
   }
 
@@ -89,11 +91,12 @@ public class Main {
       return;
     }
 
+    String newCategory = view.readCategory();
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
     try {
-      controller.updatePost(number, newTitle, newContent);
+      controller.updatePost(number, newTitle, newContent, newCategory);
       view.printMessage("게시글이 수정되었어요!");
     } catch (IllegalArgumentException e) {
       view.printMessage(e.getMessage());

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.application.port.out.PostRepository;
+import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Post;
 
 public class PostService implements PostUseCase {
@@ -14,8 +15,8 @@ public class PostService implements PostUseCase {
   }
 
   @Override
-  public void createPost(String title, String content) {
-    postRepository.save(new Post(title, content));
+  public void createPost(String title, String content, Category category, String author) {
+    postRepository.save(new Post(title, content, category, author));
   }
 
   @Override
@@ -29,12 +30,12 @@ public class PostService implements PostUseCase {
   }
 
   @Override
-  public boolean updatePost(int number, String title, String content) {
+  public boolean updatePost(int number, String title, String content, Category category) {
     Optional<Post> post = postRepository.findByNumber(number);
     if (post.isEmpty()) {
       return false;
     }
-    post.get().update(title, content);
+    post.get().update(title, content, category);
     return true;
   }
 
