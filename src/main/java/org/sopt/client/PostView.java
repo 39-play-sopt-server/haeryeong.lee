@@ -1,6 +1,7 @@
-package org.sopt;
+package org.sopt.client;
 
 import java.util.Scanner;
+import org.sopt.server.adapter.in.PostResponse;
 
 public class PostView {
   private final Scanner scanner = new Scanner(System.in);
@@ -35,10 +36,10 @@ public class PostView {
     return Integer.parseInt(scanner.nextLine());
   }
 
-  public void printPost(Post post) {
+  public void printPost(PostResponse post) {
     System.out.println("\n=== 게시글 ===");
-    System.out.println("제목: " + post.getTitle());
-    System.out.println("내용: " + post.getContent());
+    System.out.println("제목: " + post.title());
+    System.out.println("내용: " + post.content());
   }
 
   public void printMessage(String message) {

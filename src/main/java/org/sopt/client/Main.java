@@ -1,17 +1,25 @@
-package org.sopt;
+package org.sopt.client;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import org.sopt.server.adapter.in.PostController;
+import org.sopt.server.adapter.in.PostResponse;
+import org.sopt.server.config.AppConfig;
 
-public class PostController {
-  private final List<Post> posts = new ArrayList<>();
+public class Main {
   private final PostView view;
+  private final PostController controller;
 
-  public PostController(PostView view) {
+  public Main(PostView view, PostController controller) {
     this.view = view;
+    this.controller = controller;
   }
 
-  public void run() {
+  public static void main(String[] args) {
+    new Main(new PostView(), AppConfig.postController()).run();
+  }
+
+  private void run() {
     while (true) {
       view.printMenu();
       int command = view.readCommand();
@@ -33,47 +41,46 @@ public class PostController {
   private void createPost() {
     String title = view.readTitle();
     String content = view.readContent();
-    posts.add(new Post(title, content));
+    controller.createPost(title, content);
     view.printMessage("게시글이 작성되었습니다.");
   }
 
   private void readPosts() {
     view.printMessage("\n=== 게시글 목록 ===");
 
+    List<PostResponse> posts = controller.getPosts();
     if (posts.isEmpty()) {
       view.printMessage("게시글이 없습니다.");
       return;
     }
     for (int i = 0; i < posts.size(); i++) {
-      view.printMessage((i + 1) + ". " + posts.get(i).getTitle());
+      view.printMessage((i + 1) + ". " + posts.get(i).title());
     }
   }
 
   private void readPost() {
-    if (posts.isEmpty()) {
-      view.printMessage("게시글이 없습니다.");
+    if (hasNoPosts()) {
       return;
     }
 
-    int index = view.readPostNumber("조회할 게시글 번호: ") - 1;
+    int number = view.readPostNumber("조회할 게시글 번호: ");
 
-    if (!isValidIndex(index)) {
+    Optional<PostResponse> post = controller.getPost(number);
+    if (post.isEmpty()) {
       view.printMessage("존재하지 않는 게시글입니다.");
       return;
     }
-    Post post = posts.get(index);
-    view.printPost(post);
+    view.printPost(post.get());
   }
 
   private void updatePost() {
-    if (posts.isEmpty()) {
-      view.printMessage("게시글이 없습니다.");
+    if (hasNoPosts()) {
       return;
     }
 
-    int index = view.readPostNumber("수정할 게시글 번호: ") - 1;
+    int number = view.readPostNumber("수정할 게시글 번호: ");
 
-    if (!isValidIndex(index)) {
+    if (controller.getPost(number).isEmpty()) {
       view.printMessage("존재하지 않는 게시글입니다.");
       return;
     }
@@ -81,33 +88,31 @@ public class PostController {
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    Post post = posts.get(index);
-
-    post.updateTitle(newTitle);
-    post.updateContent(newContent);
+    controller.updatePost(number, newTitle, newContent);
 
     view.printMessage("게시글이 수정되었습니다.");
   }
 
   private void deletePost() {
-    if (posts.isEmpty()) {
-      view.printMessage("게시글이 없습니다.");
+    if (hasNoPosts()) {
       return;
     }
 
-    int index = view.readPostNumber("삭제할 게시글 번호: ") - 1;
+    int number = view.readPostNumber("삭제할 게시글 번호: ");
 
-    if (!isValidIndex(index)) {
+    if (!controller.deletePost(number)) {
       view.printMessage("존재하지 않는 게시글입니다.");
       return;
     }
 
-    posts.remove(index);
-
     view.printMessage("게시글이 삭제되었습니다.");
   }
 
-  private boolean isValidIndex(int index) {
-    return index >= 0 && index < posts.size();
+  private boolean hasNoPosts() {
+    if (controller.getPosts().isEmpty()) {
+      view.printMessage("게시글이 없습니다.");
+      return true;
+    }
+    return false;
   }
 }
