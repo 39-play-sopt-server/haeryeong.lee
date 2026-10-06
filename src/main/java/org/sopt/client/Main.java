@@ -66,8 +66,8 @@ public class Main {
       view.printMessage("게시글이 없습니다.");
       return;
     }
-    for (int i = 0; i < posts.size(); i++) {
-      view.printPostSummary(i + 1, posts.get(i));
+    for (PostResponse post : posts) {
+      view.printPostSummary(post);
     }
   }
 
@@ -76,9 +76,9 @@ public class Main {
       return;
     }
 
-    int number = view.readPostNumber("조회할 게시글 번호: ");
+    long id = view.readPostId("조회할 게시글 번호: ");
 
-    BaseResponse<PostResponse> response = controller.getPost(number);
+    BaseResponse<PostResponse> response = controller.getPost(id);
     if (isFailure(response)) {
       return;
     }
@@ -90,9 +90,9 @@ public class Main {
       return;
     }
 
-    int number = view.readPostNumber("수정할 게시글 번호: ");
+    long id = view.readPostId("수정할 게시글 번호: ");
 
-    if (isFailure(controller.getPost(number))) {
+    if (isFailure(controller.getPost(id))) {
       return;
     }
 
@@ -100,7 +100,7 @@ public class Main {
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    if (isFailure(controller.updatePost(number, newTitle, newContent, newCategory))) {
+    if (isFailure(controller.updatePost(id, newTitle, newContent, newCategory))) {
       return;
     }
     view.printMessage("게시글이 수정되었어요!");
@@ -111,9 +111,9 @@ public class Main {
       return;
     }
 
-    int number = view.readPostNumber("삭제할 게시글 번호: ");
+    long id = view.readPostId("삭제할 게시글 번호: ");
 
-    if (isFailure(controller.deletePost(number))) {
+    if (isFailure(controller.deletePost(id))) {
       return;
     }
     view.printMessage("게시글이 삭제되었습니다.");

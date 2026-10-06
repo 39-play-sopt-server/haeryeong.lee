@@ -9,9 +9,9 @@ public interface PostUseCase {
 
   List<Post> getPosts();
 
-  Post getPost(int number);
+  Post getPost(long id);
 
-  void updatePost(int number, String title, String content, Category category);
+  void updatePost(long id, String title, String content, Category category);
 
-  void deletePost(int number);
+  void deletePost(long id);
 }

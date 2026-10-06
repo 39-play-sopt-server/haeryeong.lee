@@ -5,6 +5,7 @@ import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 public class Post {
+  private final long id;
   private String title;
   private String content;
   private Category category;
@@ -12,15 +13,20 @@ public class Post {
   private final LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
-  public Post(String title, String content, Category category, String author) {
+  public Post(long id, String title, String content, Category category, String author) {
     validate(title, content, category);
     validateAuthor(author);
+    this.id = id;
     this.title = title;
     this.content = content;
     this.category = category;
     this.author = author;
     this.createdAt = LocalDateTime.now();
     this.updatedAt = this.createdAt;
+  }
+
+  public long getId() {
+    return this.id;
   }
 
   public String getTitle() {

@@ -9,7 +9,7 @@ public interface PostRepository {
 
   List<Post> findAll();
 
-  Optional<Post> findByNumber(int number);
+  Optional<Post> findById(long id);
 
-  void deleteByNumber(int number);
+  void deleteById(long id);
 }

@@ -45,13 +45,14 @@ public class PostView {
     return scanner.nextLine();
   }
 
-  public int readPostNumber(String message) {
+  public long readPostId(String message) {
     System.out.print(message);
-    return Integer.parseInt(scanner.nextLine());
+    return Long.parseLong(scanner.nextLine());
   }
 
   public void printPost(PostResponse post) {
     System.out.println("\n=== 게시글 ===");
+    System.out.println("번호: " + post.id());
     System.out.println("카테고리: " + post.category());
     System.out.println("제목: " + post.title());
     System.out.println("작성자: " + post.author());
@@ -60,8 +61,9 @@ public class PostView {
     System.out.println("내용: " + post.content());
   }
 
-  public void printPostSummary(int number, PostResponse post) {
-    System.out.println(number + ". [" + post.category() + "] " + post.title() + " - " + post.author());
+  public void printPostSummary(PostResponse post) {
+    System.out.println(
+        post.id() + ". [" + post.category() + "] " + post.title() + " - " + post.author());
   }
 
   public void printMessage(String message) {

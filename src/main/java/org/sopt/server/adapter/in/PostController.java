@@ -23,17 +23,17 @@ public class PostController {
     return handle(() -> postUseCase.getPosts().stream().map(PostResponse::from).toList());
   }
 
-  public BaseResponse<PostResponse> getPost(int number) {
-    return handle(() -> PostResponse.from(postUseCase.getPost(number)));
+  public BaseResponse<PostResponse> getPost(long id) {
+    return handle(() -> PostResponse.from(postUseCase.getPost(id)));
   }
 
-  public BaseResponse<Void> updatePost(int number, String title, String content, String category) {
+  public BaseResponse<Void> updatePost(long id, String title, String content, String category) {
     return handleVoid(
-        () -> postUseCase.updatePost(number, title, content, Category.from(category)));
+        () -> postUseCase.updatePost(id, title, content, Category.from(category)));
   }
 
-  public BaseResponse<Void> deletePost(int number) {
-    return handleVoid(() -> postUseCase.deletePost(number));
+  public BaseResponse<Void> deletePost(long id) {
+    return handleVoid(() -> postUseCase.deletePost(id));
   }
 
   private <T> BaseResponse<T> handle(Supplier<T> action) {

@@ -1,40 +1,33 @@
 package org.sopt.server.adapter.out;
 
-import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Post;
 
 public class InMemoryPostRepository implements PostRepository {
-  private final List<Post> posts = new ArrayList<>();
+  private final Map<Long, Post> posts = new HashMap<>();
 
   @Override
   public void save(Post post) {
-    posts.add(post);
+    posts.put(post.getId(), post);
   }
 
   @Override
   public List<Post> findAll() {
-    return List.copyOf(posts);
+    return posts.values().stream().sorted(Comparator.comparing(Post::getId)).toList();
   }
 
   @Override
-  public Optional<Post> findByNumber(int number) {
-    if (!isValidNumber(number)) {
-      return Optional.empty();
-    }
-    return Optional.of(posts.get(number - 1));
+  public Optional<Post> findById(long id) {
+    return Optional.ofNullable(posts.get(id));
   }
 
   @Override
-  public void deleteByNumber(int number) {
-    if (isValidNumber(number)) {
-      posts.remove(number - 1);
-    }
-  }
-
-  private boolean isValidNumber(int number) {
-    return number >= 1 && number <= posts.size();
+  public void deleteById(long id) {
+    posts.remove(id);
   }
 }
