@@ -62,10 +62,10 @@ public class Post {
   }
 
   private void validate(String title, String content, Category category) {
-    if (title == null || title.isEmpty()) {
+    if (title == null || title.isBlank()) {
       throw new BaseException(PostErrorCode.TITLE_REQUIRED);
     }
-    if (content == null || content.isEmpty()) {
+    if (content == null || content.isBlank()) {
       throw new BaseException(PostErrorCode.CONTENT_REQUIRED);
     }
     if (category == null) {
@@ -74,7 +74,7 @@ public class Post {
   }
 
   private void validateAuthor(String author) {
-    if (author == null || author.isEmpty()) {
+    if (author == null || author.isBlank()) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
   }
