@@ -28,12 +28,10 @@ public class InMemoryPostRepository implements PostRepository {
   }
 
   @Override
-  public boolean deleteByNumber(int number) {
-    if (!isValidNumber(number)) {
-      return false;
+  public void deleteByNumber(int number) {
+    if (isValidNumber(number)) {
+      posts.remove(number - 1);
     }
-    posts.remove(number - 1);
-    return true;
   }
 
   private boolean isValidNumber(int number) {

@@ -1,10 +1,10 @@
 package org.sopt.client;
 
 import java.util.List;
-import java.util.Optional;
 import org.sopt.server.adapter.in.PostController;
 import org.sopt.server.adapter.in.PostResponse;
 import org.sopt.server.config.AppConfig;
+import org.sopt.server.domain.exception.BaseException;
 
 public class Main {
   private final PostView view;
@@ -22,18 +22,24 @@ public class Main {
   private void run() {
     while (true) {
       view.printMenu();
-      int command = view.readCommand();
-      switch (command) {
-        case 1 -> createPost();
-        case 2 -> readPosts();
-        case 3 -> readPost();
-        case 4 -> updatePost();
-        case 5 -> deletePost();
-        case 6 -> {
-          view.printMessage("프로그램을 종료합니다.");
-          return;
+      try {
+        int command = view.readCommand();
+        switch (command) {
+          case 1 -> createPost();
+          case 2 -> readPosts();
+          case 3 -> readPost();
+          case 4 -> updatePost();
+          case 5 -> deletePost();
+          case 6 -> {
+            view.printMessage("프로그램을 종료합니다.");
+            return;
+          }
+          default -> view.printMessage("잘못된 입력입니다.");
         }
-        default -> view.printMessage("잘못된 입력입니다.");
+      } catch (BaseException e) {
+        view.printMessage(e.getMessage());
+      } catch (NumberFormatException e) {
+        view.printMessage("숫자를 입력해주세요.");
       }
     }
   }
@@ -43,12 +49,8 @@ public class Main {
     String author = view.readAuthor();
     String title = view.readTitle();
     String content = view.readContent();
-    try {
-      controller.createPost(title, content, category, author);
-      view.printMessage("게시글이 작성되었어요!");
-    } catch (IllegalArgumentException e) {
-      view.printMessage(e.getMessage());
-    }
+    controller.createPost(title, content, category, author);
+    view.printMessage("게시글이 작성되었어요!");
   }
 
   private void readPosts() {
@@ -71,12 +73,7 @@ public class Main {
 
     int number = view.readPostNumber("조회할 게시글 번호: ");
 
-    Optional<PostResponse> post = controller.getPost(number);
-    if (post.isEmpty()) {
-      view.printMessage("존재하지 않는 게시글입니다.");
-      return;
-    }
-    view.printPost(post.get());
+    view.printPost(controller.getPost(number));
   }
 
   private void updatePost() {
@@ -86,22 +83,14 @@ public class Main {
 
     int number = view.readPostNumber("수정할 게시글 번호: ");
 
-    if (controller.getPost(number).isEmpty()) {
-      view.printMessage("존재하지 않는 게시글입니다.");
-      return;
-    }
+    controller.getPost(number);
 
     String newCategory = view.readCategory();
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    try {
-      controller.updatePost(number, newTitle, newContent, newCategory);
-      view.printMessage("게시글이 수정되었어요!");
-    } catch (IllegalArgumentException e) {
-      view.printMessage(e.getMessage());
-      return;
-    }
+    controller.updatePost(number, newTitle, newContent, newCategory);
+    view.printMessage("게시글이 수정되었어요!");
   }
 
   private void deletePost() {
@@ -111,11 +100,7 @@ public class Main {
 
     int number = view.readPostNumber("삭제할 게시글 번호: ");
 
-    if (!controller.deletePost(number)) {
-      view.printMessage("존재하지 않는 게시글입니다.");
-      return;
-    }
-
+    controller.deletePost(number);
     view.printMessage("게시글이 삭제되었습니다.");
   }
 

@@ -1,6 +1,8 @@
 package org.sopt.server.domain;
 
 import java.time.LocalDateTime;
+import org.sopt.server.domain.exception.BaseException;
+import org.sopt.server.domain.exception.PostErrorCode;
 
 public class Post {
   private String title;
@@ -55,19 +57,19 @@ public class Post {
 
   private void validate(String title, String content, Category category) {
     if (title == null || title.isEmpty()) {
-      throw new IllegalArgumentException("제목을 작성해주세요.");
+      throw new BaseException(PostErrorCode.TITLE_REQUIRED);
     }
     if (content == null || content.isEmpty()) {
-      throw new IllegalArgumentException("내용을 작성해주세요.");
+      throw new BaseException(PostErrorCode.CONTENT_REQUIRED);
     }
     if (category == null) {
-      throw new IllegalArgumentException("카테고리를 선택해주세요.");
+      throw new BaseException(PostErrorCode.CATEGORY_REQUIRED);
     }
   }
 
   private void validateAuthor(String author) {
     if (author == null || author.isEmpty()) {
-      throw new IllegalArgumentException("작성자를 작성해주세요.");
+      throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
   }
 }

@@ -1,11 +1,12 @@
 package org.sopt.server.application.service;
 
 import java.util.List;
-import java.util.Optional;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Post;
+import org.sopt.server.domain.exception.BaseException;
+import org.sopt.server.domain.exception.PostErrorCode;
 
 public class PostService implements PostUseCase {
   private final PostRepository postRepository;
@@ -25,22 +26,20 @@ public class PostService implements PostUseCase {
   }
 
   @Override
-  public Optional<Post> getPost(int number) {
-    return postRepository.findByNumber(number);
+  public Post getPost(int number) {
+    return postRepository
+        .findByNumber(number)
+        .orElseThrow(() -> new BaseException(PostErrorCode.POST_NOT_FOUND));
   }
 
   @Override
-  public boolean updatePost(int number, String title, String content, Category category) {
-    Optional<Post> post = postRepository.findByNumber(number);
-    if (post.isEmpty()) {
-      return false;
-    }
-    post.get().update(title, content, category);
-    return true;
+  public void updatePost(int number, String title, String content, Category category) {
+    getPost(number).update(title, content, category);
   }
 
   @Override
-  public boolean deletePost(int number) {
-    return postRepository.deleteByNumber(number);
+  public void deletePost(int number) {
+    getPost(number);
+    postRepository.deleteByNumber(number);
   }
 }

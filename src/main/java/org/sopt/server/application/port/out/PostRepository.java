@@ -11,5 +11,5 @@ public interface PostRepository {
 
   Optional<Post> findByNumber(int number);
 
-  boolean deleteByNumber(int number);
+  void deleteByNumber(int number);
 }

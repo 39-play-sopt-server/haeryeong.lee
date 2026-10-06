@@ -1,5 +1,8 @@
 package org.sopt.server.domain;
 
+import org.sopt.server.domain.exception.BaseException;
+import org.sopt.server.domain.exception.PostErrorCode;
+
 public enum Category {
   FREE("자유"),
   QUESTION("질문"),
@@ -22,6 +25,6 @@ public enum Category {
         return category;
       }
     }
-    throw new IllegalArgumentException("존재하지 않는 카테고리입니다.");
+    throw new BaseException(PostErrorCode.CATEGORY_NOT_FOUND);
   }
 }
