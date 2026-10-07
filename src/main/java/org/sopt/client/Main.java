@@ -45,7 +45,12 @@ public class Main {
   }
 
   private void createPost() {
-    String category = view.readCategory();
+    BaseResponse<List<String>> categories = controller.getCategories();
+    if (isFailure(categories)) {
+      return;
+    }
+
+    String category = view.readCategory(categories.data());
     String author = view.readAuthor();
     String title = view.readTitle();
     String content = view.readContent();
@@ -99,7 +104,12 @@ public class Main {
       return;
     }
 
-    String newCategory = view.readCategory();
+    BaseResponse<List<String>> categories = controller.getCategories();
+    if (isFailure(categories)) {
+      return;
+    }
+
+    String newCategory = view.readCategory(categories.data());
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 

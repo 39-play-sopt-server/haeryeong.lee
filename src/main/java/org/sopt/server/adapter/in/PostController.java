@@ -1,5 +1,6 @@
 package org.sopt.server.adapter.in;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -15,6 +16,10 @@ public class PostController {
 
   public PostController(PostUseCase postUseCase) {
     this.postUseCase = postUseCase;
+  }
+
+  public BaseResponse<List<String>> getCategories() {
+    return handle(() -> Arrays.stream(Category.values()).map(Category::getLabel).toList());
   }
 
   public BaseResponse<Void> createPost(PostCreateRequest request) {

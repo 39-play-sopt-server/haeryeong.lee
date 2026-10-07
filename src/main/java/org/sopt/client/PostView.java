@@ -1,6 +1,7 @@
 package org.sopt.client;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
 import org.sopt.server.adapter.in.PostResponse;
 
@@ -25,8 +26,8 @@ public class PostView {
     return Integer.parseInt(scanner.nextLine());
   }
 
-  public String readCategory() {
-    System.out.print("카테고리(자유/질문/정보/공지): ");
+  public String readCategory(List<String> categories) {
+    System.out.print("카테고리(" + String.join("/", categories) + "): ");
     return scanner.nextLine();
   }
 
