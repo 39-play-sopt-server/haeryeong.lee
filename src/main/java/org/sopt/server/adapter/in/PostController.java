@@ -2,11 +2,15 @@ package org.sopt.server.adapter.in;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.exception.BaseException;
 
 public class PostController {
+  private static final Logger log = Logger.getLogger(PostController.class.getName());
+
   private final PostUseCase postUseCase;
 
   public PostController(PostUseCase postUseCase) {
@@ -42,6 +46,7 @@ public class PostController {
     } catch (BaseException e) {
       return BaseResponse.failure(e.getErrorCode());
     } catch (Exception e) {
+      log.log(Level.SEVERE, "[UnexpectedException]", e);
       return BaseResponse.failure(GlobalErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
