@@ -3,7 +3,9 @@ package org.sopt.client;
 import java.util.List;
 import org.sopt.server.adapter.in.BaseResponse;
 import org.sopt.server.adapter.in.PostController;
+import org.sopt.server.adapter.in.PostCreateRequest;
 import org.sopt.server.adapter.in.PostResponse;
+import org.sopt.server.adapter.in.PostUpdateRequest;
 import org.sopt.server.config.AppConfig;
 
 public class Main {
@@ -47,7 +49,8 @@ public class Main {
     String author = view.readAuthor();
     String title = view.readTitle();
     String content = view.readContent();
-    if (isFailure(controller.createPost(title, content, category, author))) {
+    PostCreateRequest request = new PostCreateRequest(title, content, category, author);
+    if (isFailure(controller.createPost(request))) {
       return;
     }
     view.printMessage("게시글이 작성되었어요!");
@@ -100,7 +103,8 @@ public class Main {
     String newTitle = view.readTitle();
     String newContent = view.readContent();
 
-    if (isFailure(controller.updatePost(id, newTitle, newContent, newCategory))) {
+    PostUpdateRequest request = new PostUpdateRequest(newTitle, newContent, newCategory);
+    if (isFailure(controller.updatePost(id, request))) {
       return;
     }
     view.printMessage("게시글이 수정되었어요!");

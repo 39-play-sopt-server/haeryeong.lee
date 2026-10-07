@@ -17,10 +17,14 @@ public class PostController {
     this.postUseCase = postUseCase;
   }
 
-  public BaseResponse<Void> createPost(
-      String title, String content, String category, String author) {
+  public BaseResponse<Void> createPost(PostCreateRequest request) {
     return handleVoid(
-        () -> postUseCase.createPost(title, content, Category.from(category), author));
+        () ->
+            postUseCase.createPost(
+                request.title(),
+                request.content(),
+                Category.from(request.category()),
+                request.author()));
   }
 
   public BaseResponse<List<PostResponse>> getPosts() {
@@ -31,9 +35,11 @@ public class PostController {
     return handle(() -> PostResponse.from(postUseCase.getPost(id)));
   }
 
-  public BaseResponse<Void> updatePost(long id, String title, String content, String category) {
+  public BaseResponse<Void> updatePost(long id, PostUpdateRequest request) {
     return handleVoid(
-        () -> postUseCase.updatePost(id, title, content, Category.from(category)));
+        () ->
+            postUseCase.updatePost(
+                id, request.title(), request.content(), Category.from(request.category())));
   }
 
   public BaseResponse<Void> deletePost(long id) {
