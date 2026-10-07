@@ -80,10 +80,6 @@ public class Main {
   }
 
   private void readPost() {
-    if (hasNoPosts()) {
-      return;
-    }
-
     long id = view.readPostId("조회할 게시글 번호: ");
 
     BaseResponse<PostResponse> response = controller.getPost(id);
@@ -94,10 +90,6 @@ public class Main {
   }
 
   private void updatePost() {
-    if (hasNoPosts()) {
-      return;
-    }
-
     long id = view.readPostId("수정할 게시글 번호: ");
 
     if (isFailure(controller.getPost(id))) {
@@ -121,28 +113,12 @@ public class Main {
   }
 
   private void deletePost() {
-    if (hasNoPosts()) {
-      return;
-    }
-
     long id = view.readPostId("삭제할 게시글 번호: ");
 
     if (isFailure(controller.deletePost(id))) {
       return;
     }
     view.printMessage("게시글이 삭제되었습니다.");
-  }
-
-  private boolean hasNoPosts() {
-    BaseResponse<List<PostResponse>> response = controller.getPosts();
-    if (isFailure(response)) {
-      return true;
-    }
-    if (response.data().isEmpty()) {
-      view.printMessage("게시글이 없습니다.");
-      return true;
-    }
-    return false;
   }
 
   private boolean isFailure(BaseResponse<?> response) {
