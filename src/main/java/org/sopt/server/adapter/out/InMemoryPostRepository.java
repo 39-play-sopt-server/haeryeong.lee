@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Post;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class InMemoryPostRepository implements PostRepository {
   private final Map<Long, Post> posts = new HashMap<>();
 

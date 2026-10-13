@@ -8,7 +8,16 @@ import java.util.logging.Logger;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.exception.BaseException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
+@RequestMapping("/api/v1/posts")
 public class PostController {
   private static final Logger log = Logger.getLogger(PostController.class.getName());
 
@@ -22,6 +31,7 @@ public class PostController {
     return handle(() -> Arrays.stream(Category.values()).map(Category::getLabel).toList());
   }
 
+  @PostMapping
   public BaseResponse<Void> createPost(PostCreateRequest request) {
     return handleVoid(
         () ->
@@ -32,22 +42,26 @@ public class PostController {
                 request.author()));
   }
 
+  @GetMapping
   public BaseResponse<List<PostResponse>> getPosts() {
     return handle(() -> postUseCase.getPosts().stream().map(PostResponse::from).toList());
   }
 
-  public BaseResponse<PostResponse> getPost(long id) {
+  @GetMapping("/{id}")
+  public BaseResponse<PostResponse> getPost(@PathVariable long id) {
     return handle(() -> PostResponse.from(postUseCase.getPost(id)));
   }
 
-  public BaseResponse<Void> updatePost(long id, PostUpdateRequest request) {
+  @PutMapping("/{id}")
+  public BaseResponse<Void> updatePost(@PathVariable long id, PostUpdateRequest request) {
     return handleVoid(
         () ->
             postUseCase.updatePost(
                 id, request.title(), request.content(), Category.from(request.category())));
   }
 
-  public BaseResponse<Void> deletePost(long id) {
+  @DeleteMapping("/{id}")
+  public BaseResponse<Void> deletePost(@PathVariable long id) {
     return handleVoid(() -> postUseCase.deletePost(id));
   }
 
