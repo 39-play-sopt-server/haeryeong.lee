@@ -32,21 +32,28 @@ public class PostService implements PostUseCase {
 
   @Override
   public Post getPost(long id) {
-    return postRepository
-        .findById(id)
-        .orElseThrow(() -> new BaseException(PostErrorCode.POST_NOT_FOUND));
+    Post post = findPost(id);
+    post.increaseViewCount();
+    postRepository.save(post);
+    return post;
   }
 
   @Override
   public void updatePost(long id, String title, String content, Category category) {
-    Post post = getPost(id);
+    Post post = findPost(id);
     post.update(title, content, category);
     postRepository.save(post);
   }
 
   @Override
   public void deletePost(long id) {
-    getPost(id);
+    findPost(id);
     postRepository.deleteById(id);
+  }
+
+  private Post findPost(long id) {
+    return postRepository
+        .findById(id)
+        .orElseThrow(() -> new BaseException(PostErrorCode.POST_NOT_FOUND));
   }
 }
