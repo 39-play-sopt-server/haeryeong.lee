@@ -6,22 +6,17 @@ import org.sopt.server.adapter.in.PostController;
 import org.sopt.server.adapter.in.PostCreateRequest;
 import org.sopt.server.adapter.in.PostResponse;
 import org.sopt.server.adapter.in.PostUpdateRequest;
-import org.sopt.server.config.AppConfig;
 
-public class Main {
+public class PostClient {
   private final PostView view;
   private final PostController controller;
 
-  public Main(PostView view, PostController controller) {
+  public PostClient(PostView view, PostController controller) {
     this.view = view;
     this.controller = controller;
   }
 
-  public static void main(String[] args) {
-    new Main(new PostView(), AppConfig.postController()).run();
-  }
-
-  private void run() {
+  public void run() {
     while (true) {
       view.printMenu();
       try {

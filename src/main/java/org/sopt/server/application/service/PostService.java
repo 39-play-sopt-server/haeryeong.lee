@@ -8,7 +8,9 @@ import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
+import org.springframework.stereotype.Service;
 
+@Service
 public class PostService implements PostUseCase {
   private final PostRepository postRepository;
   private final IdGenerator idGenerator;
