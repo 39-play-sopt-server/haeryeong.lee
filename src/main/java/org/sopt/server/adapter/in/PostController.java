@@ -1,7 +1,5 @@
 package org.sopt.server.adapter.in;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Arrays;
 import java.util.List;
 import org.sopt.server.application.port.in.PostUseCase;
@@ -17,10 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Post", description = "게시글 API")
 @RestController
 @RequestMapping("/api/v1/posts")
-public class PostController {
+public class PostController implements PostApi {
   private final PostUseCase postUseCase;
 
   public PostController(PostUseCase postUseCase) {
@@ -31,7 +28,7 @@ public class PostController {
     return BaseResponse.success(Arrays.stream(Category.values()).map(Category::getLabel).toList());
   }
 
-  @Operation(summary = "게시글 작성")
+  @Override
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public BaseResponse<Void> createPost(@RequestBody PostCreateRequest request) {
@@ -40,19 +37,19 @@ public class PostController {
     return BaseResponse.success(null);
   }
 
-  @Operation(summary = "게시글 목록 조회")
+  @Override
   @GetMapping
   public BaseResponse<List<PostResponse>> getPosts() {
     return BaseResponse.success(postUseCase.getPosts().stream().map(PostResponse::from).toList());
   }
 
-  @Operation(summary = "게시글 상세 조회")
+  @Override
   @GetMapping("/{id}")
   public BaseResponse<PostResponse> getPost(@PathVariable long id) {
     return BaseResponse.success(PostResponse.from(postUseCase.getPost(id)));
   }
 
-  @Operation(summary = "게시글 수정")
+  @Override
   @PutMapping("/{id}")
   public BaseResponse<Void> updatePost(
       @PathVariable long id, @RequestBody PostUpdateRequest request) {
@@ -61,7 +58,7 @@ public class PostController {
     return BaseResponse.success(null);
   }
 
-  @Operation(summary = "게시글 삭제")
+  @Override
   @DeleteMapping("/{id}")
   public BaseResponse<Void> deletePost(@PathVariable long id) {
     postUseCase.deletePost(id);
