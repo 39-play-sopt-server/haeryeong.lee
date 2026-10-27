@@ -1,6 +1,7 @@
 package org.sopt.server.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -17,9 +18,9 @@ class PostTest {
   @Test
   @DisplayName("유효한 값으로 게시글을 생성하면 수정일은 작성일과 같다")
   void create() {
-    Post post = new Post(1L, "제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, "작성자");
 
-    assertEquals(1L, post.getId());
+    assertNull(post.getId());
     assertEquals("제목", post.getTitle());
     assertEquals("내용", post.getContent());
     assertEquals(Category.FREE, post.getCategory());
@@ -34,7 +35,7 @@ class PostTest {
   void createWithBlankTitle(String title) {
     BaseException e =
         assertThrows(
-            BaseException.class, () -> new Post(1L, title, "내용", Category.FREE, "작성자"));
+            BaseException.class, () -> new Post(title, "내용", Category.FREE, "작성자"));
 
     assertEquals(PostErrorCode.TITLE_REQUIRED, e.getErrorCode());
   }
@@ -46,7 +47,7 @@ class PostTest {
   void createWithBlankContent(String content) {
     BaseException e =
         assertThrows(
-            BaseException.class, () -> new Post(1L, "제목", content, Category.FREE, "작성자"));
+            BaseException.class, () -> new Post("제목", content, Category.FREE, "작성자"));
 
     assertEquals(PostErrorCode.CONTENT_REQUIRED, e.getErrorCode());
   }
@@ -58,7 +59,7 @@ class PostTest {
   void createWithBlankAuthor(String author) {
     BaseException e =
         assertThrows(
-            BaseException.class, () -> new Post(1L, "제목", "내용", Category.FREE, author));
+            BaseException.class, () -> new Post("제목", "내용", Category.FREE, author));
 
     assertEquals(PostErrorCode.AUTHOR_REQUIRED, e.getErrorCode());
   }
@@ -67,7 +68,7 @@ class PostTest {
   @DisplayName("카테고리가 없으면 생성할 수 없다")
   void createWithoutCategory() {
     BaseException e =
-        assertThrows(BaseException.class, () -> new Post(1L, "제목", "내용", null, "작성자"));
+        assertThrows(BaseException.class, () -> new Post("제목", "내용", null, "작성자"));
 
     assertEquals(PostErrorCode.CATEGORY_REQUIRED, e.getErrorCode());
   }
@@ -75,7 +76,7 @@ class PostTest {
   @Test
   @DisplayName("수정하면 제목, 내용, 카테고리가 바뀌고 작성자와 작성일은 유지된다")
   void update() {
-    Post post = new Post(1L, "제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, "작성자");
 
     post.update("새 제목", "새 내용", Category.NOTICE);
 
@@ -89,7 +90,7 @@ class PostTest {
   @Test
   @DisplayName("수정 값이 유효하지 않으면 기존 값이 그대로 유지된다")
   void updateWithBlankContent() {
-    Post post = new Post(1L, "제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, "작성자");
 
     BaseException e =
         assertThrows(BaseException.class, () -> post.update("새 제목", " ", Category.NOTICE));

@@ -1,23 +1,39 @@
 package org.sopt.server.domain;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
+@Entity
 public class Post {
-  private final long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
   private String title;
   private String content;
+
+  @Enumerated(EnumType.STRING)
   private Category category;
-  private final String author;
-  private final LocalDateTime createdAt;
+
+//  private final String author;
+  private String author;
+//  private final LocalDateTime createdAt;
+  private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
   private long viewCount;
 
-  public Post(long id, String title, String content, Category category, String author) {
+  protected Post() {}
+
+  public Post(String title, String content, Category category, String author) {
     validate(title, content, category);
     validateAuthor(author);
-    this.id = id;
     this.title = title;
     this.content = content;
     this.category = category;
@@ -26,7 +42,7 @@ public class Post {
     this.updatedAt = this.createdAt;
   }
 
-  public long getId() {
+  public Long getId() {
     return this.id;
   }
 
