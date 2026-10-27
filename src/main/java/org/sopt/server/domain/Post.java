@@ -12,6 +12,7 @@ public class Post {
   private final String author;
   private final LocalDateTime createdAt;
   private LocalDateTime updatedAt;
+  private long viewCount;
 
   public Post(long id, String title, String content, Category category, String author) {
     validate(title, content, category);
@@ -51,6 +52,14 @@ public class Post {
 
   public LocalDateTime getUpdatedAt() {
     return this.updatedAt;
+  }
+
+  public long getViewCount() {
+    return this.viewCount;
+  }
+
+  public void increaseViewCount() {
+    this.viewCount++;
   }
 
   public void update(String title, String content, Category category) {

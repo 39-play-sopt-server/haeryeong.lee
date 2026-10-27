@@ -9,6 +9,7 @@ public record PostResponse(
     String content,
     String category,
     String author,
+    long viewCount,
     LocalDateTime createdAt,
     LocalDateTime updatedAt) {
   public static PostResponse from(Post post) {
@@ -18,6 +19,7 @@ public record PostResponse(
         post.getContent(),
         post.getCategory().getLabel(),
         post.getAuthor(),
+        post.getViewCount(),
         post.getCreatedAt(),
         post.getUpdatedAt());
   }

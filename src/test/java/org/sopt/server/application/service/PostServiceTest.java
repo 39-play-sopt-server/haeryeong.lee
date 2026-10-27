@@ -124,4 +124,26 @@ class PostServiceTest {
     assertEquals("둘째", postService.getPost(2L).getTitle());
     assertEquals("셋째", postService.getPost(3L).getTitle());
   }
+
+  @Test
+  @DisplayName("게시글을 상세 조회할 때마다 조회수가 1씩 증가한다")
+  void getIncreasesViewCount() {
+    postService.createPost("제목", "내용", Category.FREE, "작성자");
+
+    assertEquals(1L, postService.getPost(1L).getViewCount());
+    assertEquals(2L, postService.getPost(1L).getViewCount());
+  }
+
+  @Test
+  @DisplayName("목록 조회, 수정, 삭제는 조회수를 증가시키지 않는다")
+  void onlyGetIncreasesViewCount() {
+    postService.createPost("첫째", "내용", Category.FREE, "작성자");
+    postService.createPost("둘째", "내용", Category.FREE, "작성자");
+
+    postService.getPosts();
+    postService.updatePost(1L, "새 제목", "새 내용", Category.NOTICE);
+    postService.deletePost(2L);
+
+    assertEquals(0L, postService.getPosts().get(0).getViewCount());
+  }
 }
