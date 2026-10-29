@@ -4,11 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.MemberErrorCode;
 
 @Entity
-public class Member {
+@SQLRestriction("deleted_at is null")
+public class Member extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;

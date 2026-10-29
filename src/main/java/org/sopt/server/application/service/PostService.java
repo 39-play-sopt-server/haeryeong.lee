@@ -37,9 +37,12 @@ public class PostService implements PostUseCase {
 
   @Override
   public Post getPost(long id) {
-    Post post = findPostForUpdate(id);
-    post.increaseViewCount();
-    return post;
+    if (postRepository.increaseViewCount(id) == 0) {
+      throw new BaseException(PostErrorCode.POST_NOT_FOUND);
+    }
+    return postRepository
+        .findWithAuthorById(id)
+        .orElseThrow(() -> new BaseException(PostErrorCode.POST_NOT_FOUND));
   }
 
   @Override
@@ -50,8 +53,7 @@ public class PostService implements PostUseCase {
 
   @Override
   public void deletePost(long id) {
-    Post post = findPostForUpdate(id);
-    postRepository.delete(post);
+    findPostForUpdate(id).delete();
   }
 
   private Post findPostForUpdate(long id) {

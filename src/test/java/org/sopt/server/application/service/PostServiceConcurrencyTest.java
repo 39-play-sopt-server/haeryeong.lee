@@ -13,13 +13,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sopt.server.application.port.out.MemberRepository;
-import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest
 class PostServiceConcurrencyTest {
@@ -27,7 +27,7 @@ class PostServiceConcurrencyTest {
   private static final int REQUEST_COUNT = 10_000;
 
   @Autowired private PostService postService;
-  @Autowired private PostRepository postRepository;
+  @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private MemberRepository memberRepository;
 
   private long memberId;
@@ -39,8 +39,9 @@ class PostServiceConcurrencyTest {
 
   @AfterEach
   void tearDown() {
-    postRepository.deleteAll();
-    memberRepository.deleteAll();
+    // 소프트 삭제된 데이터는 리포지토리로 조회되지 않으므로 테이블을 직접 비운다
+    jdbcTemplate.update("delete from post");
+    jdbcTemplate.update("delete from member");
   }
 
   @Test

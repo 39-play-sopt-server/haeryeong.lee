@@ -9,12 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
+import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 @Entity
-public class Post {
+@SQLRestriction("deleted_at is null")
+public class Post extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -29,8 +30,6 @@ public class Post {
   @JoinColumn(name = "member_id", nullable = false)
   private Member author;
 
-  private LocalDateTime createdAt;
-  private LocalDateTime updatedAt;
   private long viewCount;
 
   protected Post() {}
@@ -42,8 +41,6 @@ public class Post {
     this.content = content;
     this.category = category;
     this.author = author;
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = this.createdAt;
   }
 
   public Long getId() {
@@ -66,20 +63,8 @@ public class Post {
     return this.author;
   }
 
-  public LocalDateTime getCreatedAt() {
-    return this.createdAt;
-  }
-
-  public LocalDateTime getUpdatedAt() {
-    return this.updatedAt;
-  }
-
   public long getViewCount() {
     return this.viewCount;
-  }
-
-  public void increaseViewCount() {
-    this.viewCount++;
   }
 
   public void update(String title, String content, Category category) {
@@ -87,7 +72,6 @@ public class Post {
     this.title = title;
     this.content = content;
     this.category = category;
-    this.updatedAt = LocalDateTime.now();
   }
 
   private void validate(String title, String content, Category category) {

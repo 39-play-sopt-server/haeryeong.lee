@@ -1,6 +1,7 @@
 package org.sopt.server.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sopt.server.application.port.out.MemberRepository;
-import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
@@ -19,13 +19,14 @@ import org.sopt.server.domain.exception.MemberErrorCode;
 import org.sopt.server.domain.exception.PostErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest
 class PostServiceTest {
   private static final long NOT_EXIST_ID = Long.MAX_VALUE;
 
   @Autowired private PostService postService;
-  @Autowired private PostRepository postRepository;
+  @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private MemberRepository memberRepository;
 
   private long memberId;
@@ -37,8 +38,9 @@ class PostServiceTest {
 
   @AfterEach
   void tearDown() {
-    postRepository.deleteAll();
-    memberRepository.deleteAll();
+    // 소프트 삭제된 데이터는 리포지토리로 조회되지 않으므로 테이블을 직접 비운다
+    jdbcTemplate.update("delete from post");
+    jdbcTemplate.update("delete from member");
   }
 
   @Test
@@ -152,6 +154,36 @@ class PostServiceTest {
 
     BaseException e = assertThrows(BaseException.class, () -> postService.getPost(id));
     assertEquals(PostErrorCode.POST_NOT_FOUND, e.getErrorCode());
+    assertTrue(postService.getPosts().isEmpty());
+  }
+
+  @Test
+  @DisplayName("게시글을 삭제해도 데이터는 남고 삭제 시각이 기록된다")
+  void deleteIsSoft() {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+
+    postService.deletePost(id);
+
+    Integer deleted =
+        jdbcTemplate.queryForObject(
+            "select count(*) from post where id = ? and deleted_at is not null", Integer.class, id);
+    assertEquals(1, deleted);
+  }
+
+  @Test
+  @DisplayName("이미 삭제된 게시글은 수정하거나 다시 삭제할 수 없다")
+  void updateOrDeleteDeleted() {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+    postService.deletePost(id);
+
+    BaseException update =
+        assertThrows(
+            BaseException.class,
+            () -> postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE));
+    BaseException delete = assertThrows(BaseException.class, () -> postService.deletePost(id));
+
+    assertEquals(PostErrorCode.POST_NOT_FOUND, update.getErrorCode());
+    assertEquals(PostErrorCode.POST_NOT_FOUND, delete.getErrorCode());
   }
 
   @Test
@@ -196,5 +228,43 @@ class PostServiceTest {
     postService.deletePost(second);
 
     assertEquals(0L, postService.getPosts().get(0).getViewCount());
+  }
+
+  @Test
+  @DisplayName("게시글을 작성하면 작성일과 수정일이 기록된다")
+  void createRecordsDates() {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+
+    Post post = postService.getPost(id);
+
+    assertNotNull(post.getCreatedAt());
+    assertEquals(post.getCreatedAt(), post.getUpdatedAt());
+  }
+
+  @Test
+  @DisplayName("게시글을 수정하면 수정일만 바뀌고 작성일은 유지된다")
+  void updateChangesUpdatedAt() throws InterruptedException {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+    Post before = postService.getPost(id);
+
+    Thread.sleep(10);
+    postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE);
+
+    Post after = postService.getPost(id);
+    assertEquals(before.getCreatedAt(), after.getCreatedAt());
+    assertTrue(after.getUpdatedAt().isAfter(before.getUpdatedAt()));
+  }
+
+  @Test
+  @DisplayName("상세 조회로 조회수가 늘어나도 수정일은 바뀌지 않는다")
+  void getDoesNotChangeUpdatedAt() throws InterruptedException {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+    Post before = postService.getPost(id);
+
+    Thread.sleep(10);
+    Post after = postService.getPost(id);
+
+    assertEquals(2L, after.getViewCount());
+    assertEquals(before.getUpdatedAt(), after.getUpdatedAt());
   }
 }

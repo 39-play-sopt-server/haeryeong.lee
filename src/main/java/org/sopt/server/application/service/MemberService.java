@@ -31,8 +31,7 @@ public class MemberService implements MemberUseCase {
         memberRepository
             .findById(id)
             .orElseThrow(() -> new BaseException(MemberErrorCode.MEMBER_NOT_FOUND));
-    // 게시글이 회원을 참조하고 있으므로 회원의 게시글을 먼저 삭제한다
-    postRepository.deleteAllByAuthor(member);
-    memberRepository.delete(member);
+    member.delete();
+    postRepository.deleteAllByAuthor(member, member.getDeletedAt());
   }
 }

@@ -1,9 +1,11 @@
 package org.sopt.server.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,7 @@ class PostTest {
   private static final Member AUTHOR = new Member("작성자");
 
   @Test
-  @DisplayName("유효한 값으로 게시글을 생성하면 수정일은 작성일과 같다")
+  @DisplayName("유효한 값으로 게시글을 생성한다")
   void create() {
     Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
 
@@ -26,7 +28,7 @@ class PostTest {
     assertEquals("내용", post.getContent());
     assertEquals(Category.FREE, post.getCategory());
     assertEquals(AUTHOR, post.getAuthor());
-    assertEquals(post.getCreatedAt(), post.getUpdatedAt());
+    assertFalse(post.isDeleted());
   }
 
   @ParameterizedTest
@@ -72,7 +74,7 @@ class PostTest {
   }
 
   @Test
-  @DisplayName("수정하면 제목, 내용, 카테고리가 바뀌고 작성자와 작성일은 유지된다")
+  @DisplayName("수정하면 제목, 내용, 카테고리가 바뀌고 작성자는 유지된다")
   void update() {
     Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
 
@@ -82,7 +84,17 @@ class PostTest {
     assertEquals("새 내용", post.getContent());
     assertEquals(Category.NOTICE, post.getCategory());
     assertEquals(AUTHOR, post.getAuthor());
-    assertFalse(post.getUpdatedAt().isBefore(post.getCreatedAt()));
+  }
+
+  @Test
+  @DisplayName("삭제하면 삭제 시각이 기록되고 삭제된 상태가 된다")
+  void delete() {
+    Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
+
+    post.delete();
+
+    assertTrue(post.isDeleted());
+    assertNotNull(post.getDeletedAt());
   }
 
   @Test
