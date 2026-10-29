@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
-import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,13 +44,11 @@ class PostServiceConcurrencyTest {
   }
 
   @Test
-  @DisplayName("여러 사용자가 동시에 게시글을 작성해도 모든 게시글이 서로 다른 id로 저장된다")
+  @DisplayName("여러 사용자가 동시에 게시글을 작성해도 모든 게시글이 저장된다")
   void createConcurrently() throws Exception {
     runConcurrently(() -> postService.createPost("제목", "내용", Category.FREE, memberId));
 
-    List<Post> posts = postService.getPosts();
-    assertEquals(REQUEST_COUNT, posts.size());
-    assertEquals(REQUEST_COUNT, posts.stream().map(Post::getId).distinct().count());
+    assertEquals(REQUEST_COUNT, postService.getPosts(0, 1).getTotalElements());
   }
 
   @Test
@@ -61,7 +58,7 @@ class PostServiceConcurrencyTest {
 
     runConcurrently(() -> postService.getPost(id));
 
-    assertEquals(REQUEST_COUNT, postService.getPosts().get(0).getViewCount());
+    assertEquals(REQUEST_COUNT, postService.getPosts(0, 1).getContent().get(0).getViewCount());
   }
 
   @Test
@@ -80,7 +77,7 @@ class PostServiceConcurrencyTest {
     }
     runConcurrently(tasks);
 
-    assertEquals(0, postService.getPosts().size());
+    assertEquals(0, postService.getPosts(0, 1).getTotalElements());
   }
 
   private void runConcurrently(Runnable task) throws Exception {

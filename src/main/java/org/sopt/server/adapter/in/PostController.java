@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,8 +40,9 @@ public class PostController implements PostApi {
 
   @Override
   @GetMapping
-  public BaseResponse<List<PostResponse>> getPosts() {
-    return BaseResponse.success(postUseCase.getPosts().stream().map(PostResponse::from).toList());
+  public BaseResponse<PostPageResponse> getPosts(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+    return BaseResponse.success(PostPageResponse.from(postUseCase.getPosts(page, size)));
   }
 
   @Override

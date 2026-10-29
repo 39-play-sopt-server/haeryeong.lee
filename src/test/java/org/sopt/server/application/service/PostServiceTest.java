@@ -1,15 +1,19 @@
 package org.sopt.server.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
@@ -19,6 +23,7 @@ import org.sopt.server.domain.exception.MemberErrorCode;
 import org.sopt.server.domain.exception.PostErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest
@@ -65,7 +70,7 @@ class PostServiceTest {
             () -> postService.createPost(" ", "내용", Category.FREE, memberId));
 
     assertEquals(PostErrorCode.TITLE_REQUIRED, e.getErrorCode());
-    assertTrue(postService.getPosts().isEmpty());
+    assertTrue(allPosts().isEmpty());
   }
 
   @Test
@@ -87,7 +92,7 @@ class PostServiceTest {
             () -> postService.createPost("제목", "내용", Category.FREE, NOT_EXIST_ID));
 
     assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
-    assertTrue(postService.getPosts().isEmpty());
+    assertTrue(allPosts().isEmpty());
   }
 
   @Test
@@ -95,22 +100,63 @@ class PostServiceTest {
   void getPostsWithAuthorName() {
     postService.createPost("제목", "내용", Category.FREE, memberId);
 
-    List<Post> posts = postService.getPosts();
+    List<Post> posts = allPosts();
 
     assertEquals("작성자", posts.get(0).getAuthor().getName());
   }
 
   @Test
-  @DisplayName("게시글 목록은 id 순서로 조회된다")
+  @DisplayName("게시글 목록은 최신순으로 조회된다")
   void getPosts() {
     long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
     long second = postService.createPost("둘째", "내용", Category.QUESTION, memberId);
     long third = postService.createPost("셋째", "내용", Category.INFO, memberId);
 
-    List<Post> posts = postService.getPosts();
+    List<Post> posts = allPosts();
 
-    assertEquals(List.of("첫째", "둘째", "셋째"), posts.stream().map(Post::getTitle).toList());
-    assertEquals(List.of(first, second, third), posts.stream().map(Post::getId).toList());
+    assertEquals(List.of("셋째", "둘째", "첫째"), posts.stream().map(Post::getTitle).toList());
+    assertEquals(List.of(third, second, first), posts.stream().map(Post::getId).toList());
+  }
+
+  @Test
+  @DisplayName("게시글 목록을 페이지 단위로 나눠 조회한다")
+  void getPostsByPage() {
+    List<Long> ids = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      ids.add(postService.createPost("제목" + i, "내용", Category.FREE, memberId));
+    }
+
+    Page<Post> first = postService.getPosts(0, 2);
+    Page<Post> last = postService.getPosts(2, 2);
+
+    assertEquals(List.of(ids.get(4), ids.get(3)), first.map(Post::getId).getContent());
+    assertEquals(5, first.getTotalElements());
+    assertEquals(3, first.getTotalPages());
+    assertTrue(first.hasNext());
+    assertEquals(List.of(ids.get(0)), last.map(Post::getId).getContent());
+    assertFalse(last.hasNext());
+  }
+
+  @Test
+  @DisplayName("삭제된 게시글은 목록과 전체 개수에서 제외된다")
+  void getPostsExcludesDeleted() {
+    long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
+    long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
+
+    postService.deletePost(first);
+
+    Page<Post> page = postService.getPosts(0, 10);
+    assertEquals(List.of(second), page.map(Post::getId).getContent());
+    assertEquals(1, page.getTotalElements());
+  }
+
+  @ParameterizedTest
+  @CsvSource({"-1, 10", "0, 0", "0, 101"})
+  @DisplayName("페이지 번호나 크기가 범위를 벗어나면 예외가 발생한다")
+  void getPostsWithInvalidPage(int page, int size) {
+    BaseException e = assertThrows(BaseException.class, () -> postService.getPosts(page, size));
+
+    assertEquals(PostErrorCode.INVALID_PAGE_REQUEST, e.getErrorCode());
   }
 
   @Test
@@ -154,7 +200,7 @@ class PostServiceTest {
 
     BaseException e = assertThrows(BaseException.class, () -> postService.getPost(id));
     assertEquals(PostErrorCode.POST_NOT_FOUND, e.getErrorCode());
-    assertTrue(postService.getPosts().isEmpty());
+    assertTrue(allPosts().isEmpty());
   }
 
   @Test
@@ -223,11 +269,11 @@ class PostServiceTest {
     long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
     long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
-    postService.getPosts();
+    allPosts();
     postService.updatePost(first, "새 제목", "새 내용", Category.NOTICE);
     postService.deletePost(second);
 
-    assertEquals(0L, postService.getPosts().get(0).getViewCount());
+    assertEquals(0L, allPosts().get(0).getViewCount());
   }
 
   @Test
@@ -266,5 +312,9 @@ class PostServiceTest {
 
     assertEquals(2L, after.getViewCount());
     assertEquals(before.getUpdatedAt(), after.getUpdatedAt());
+  }
+
+  private List<Post> allPosts() {
+    return postService.getPosts(0, 100).getContent();
   }
 }

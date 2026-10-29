@@ -2,10 +2,11 @@ package org.sopt.server.application.port.out;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,8 +14,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-  @Query("select p from Post p join fetch p.author order by p.id")
-  List<Post> findAllWithAuthor();
+  @Query(
+      value = "select p from Post p join fetch p.author",
+      countQuery = "select count(p) from Post p")
+  Page<Post> findAllWithAuthor(Pageable pageable);
 
   @Query("select p from Post p join fetch p.author where p.id = :id")
   Optional<Post> findWithAuthorById(@Param("id") long id);

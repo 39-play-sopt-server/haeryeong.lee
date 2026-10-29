@@ -1,13 +1,13 @@
 package org.sopt.server.application.port.in;
 
-import java.util.List;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Post;
+import org.springframework.data.domain.Page;
 
 public interface PostUseCase {
   long createPost(String title, String content, Category category, Long memberId);
 
-  List<Post> getPosts();
+  Page<Post> getPosts(int page, int size);
 
   Post getPost(long id);
 
