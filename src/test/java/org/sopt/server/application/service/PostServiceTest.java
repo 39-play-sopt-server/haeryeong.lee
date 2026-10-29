@@ -317,4 +317,17 @@ class PostServiceTest {
   private List<Post> allPosts() {
     return postService.getPosts(0, 100).getContent();
   }
+
+  @Test
+  @DisplayName("최대 길이의 제목과 내용도 DB에 그대로 저장된다")
+  void createWithMaxLength() {
+    String title = "가".repeat(Post.MAX_TITLE_LENGTH);
+    String content = "가".repeat(Post.MAX_CONTENT_LENGTH);
+
+    long id = postService.createPost(title, content, Category.FREE, memberId);
+
+    Post post = postService.getPost(id);
+    assertEquals(title, post.getTitle());
+    assertEquals(content, post.getContent());
+  }
 }

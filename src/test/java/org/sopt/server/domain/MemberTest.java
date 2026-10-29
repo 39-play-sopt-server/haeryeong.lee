@@ -32,4 +32,22 @@ class MemberTest {
 
     assertEquals(MemberErrorCode.NAME_REQUIRED, e.getErrorCode());
   }
+
+  @Test
+  @DisplayName("이름은 최대 길이까지 작성할 수 있다")
+  void createWithMaxLength() {
+    String name = "가".repeat(Member.MAX_NAME_LENGTH);
+
+    assertEquals(name, new Member(name).getName());
+  }
+
+  @Test
+  @DisplayName("이름이 최대 길이를 넘으면 생성할 수 없다")
+  void createWithTooLongName() {
+    String name = "가".repeat(Member.MAX_NAME_LENGTH + 1);
+
+    BaseException e = assertThrows(BaseException.class, () -> new Member(name));
+
+    assertEquals(MemberErrorCode.NAME_TOO_LONG, e.getErrorCode());
+  }
 }

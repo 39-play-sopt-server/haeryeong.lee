@@ -124,4 +124,14 @@ class MemberServiceTest {
 
     assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
   }
+
+  @Test
+  @DisplayName("최대 길이의 이름도 DB에 그대로 저장된다")
+  void createWithMaxLength() {
+    String name = "가".repeat(Member.MAX_NAME_LENGTH);
+
+    Member member = memberService.createMember(name);
+
+    assertEquals(name, memberRepository.findById(member.getId()).orElseThrow().getName());
+  }
 }

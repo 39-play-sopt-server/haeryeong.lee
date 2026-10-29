@@ -110,4 +110,51 @@ class PostTest {
     assertEquals("내용", post.getContent());
     assertEquals(Category.FREE, post.getCategory());
   }
+
+  @Test
+  @DisplayName("제목과 내용은 최대 길이까지 작성할 수 있다")
+  void createWithMaxLength() {
+    String title = "가".repeat(Post.MAX_TITLE_LENGTH);
+    String content = "가".repeat(Post.MAX_CONTENT_LENGTH);
+
+    Post post = new Post(title, content, Category.FREE, AUTHOR);
+
+    assertEquals(title, post.getTitle());
+    assertEquals(content, post.getContent());
+  }
+
+  @Test
+  @DisplayName("제목이 최대 길이를 넘으면 생성할 수 없다")
+  void createWithTooLongTitle() {
+    String title = "가".repeat(Post.MAX_TITLE_LENGTH + 1);
+
+    BaseException e =
+        assertThrows(BaseException.class, () -> new Post(title, "내용", Category.FREE, AUTHOR));
+
+    assertEquals(PostErrorCode.TITLE_TOO_LONG, e.getErrorCode());
+  }
+
+  @Test
+  @DisplayName("내용이 최대 길이를 넘으면 생성할 수 없다")
+  void createWithTooLongContent() {
+    String content = "가".repeat(Post.MAX_CONTENT_LENGTH + 1);
+
+    BaseException e =
+        assertThrows(BaseException.class, () -> new Post("제목", content, Category.FREE, AUTHOR));
+
+    assertEquals(PostErrorCode.CONTENT_TOO_LONG, e.getErrorCode());
+  }
+
+  @Test
+  @DisplayName("수정할 때도 최대 길이를 넘을 수 없다")
+  void updateWithTooLongTitle() {
+    Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
+    String title = "가".repeat(Post.MAX_TITLE_LENGTH + 1);
+
+    BaseException e =
+        assertThrows(BaseException.class, () -> post.update(title, "내용", Category.FREE));
+
+    assertEquals(PostErrorCode.TITLE_TOO_LONG, e.getErrorCode());
+    assertEquals("제목", post.getTitle());
+  }
 }

@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface MemberApi {
   @Operation(summary = "회원 생성")
   @ApiResponse(responseCode = "201", description = "생성 성공")
-  @ApiResponse(responseCode = "400", description = "이름 누락")
+  @ApiResponse(responseCode = "400", description = "이름 누락 또는 길이 초과")
   BaseResponse<MemberResponse> createMember(MemberCreateRequest request);
 
   @Operation(summary = "회원 삭제", description = "회원이 작성한 게시글도 함께 삭제됩니다.")

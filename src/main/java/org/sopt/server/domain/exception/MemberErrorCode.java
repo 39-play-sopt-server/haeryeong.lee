@@ -2,7 +2,8 @@ package org.sopt.server.domain.exception;
 
 public enum MemberErrorCode implements ErrorCode {
   MEMBER_NOT_FOUND(ErrorType.NOT_FOUND, "MEMBER-E001", "존재하지 않는 회원입니다."),
-  NAME_REQUIRED(ErrorType.INVALID_INPUT, "MEMBER-E002", "이름을 작성해주세요.");
+  NAME_REQUIRED(ErrorType.INVALID_INPUT, "MEMBER-E002", "이름을 작성해주세요."),
+  NAME_TOO_LONG(ErrorType.INVALID_INPUT, "MEMBER-E003", "이름은 30자 이하로 작성해주세요.");
 
   private final ErrorType type;
   private final String code;

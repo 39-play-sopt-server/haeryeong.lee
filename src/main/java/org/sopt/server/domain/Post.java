@@ -1,5 +1,6 @@
 package org.sopt.server.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,11 +17,17 @@ import org.sopt.server.domain.exception.PostErrorCode;
 @Entity
 @SQLRestriction("deleted_at is null")
 public class Post extends BaseEntity {
+  public static final int MAX_TITLE_LENGTH = 100;
+  public static final int MAX_CONTENT_LENGTH = 10_000;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(nullable = false, length = MAX_TITLE_LENGTH)
   private String title;
+
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
   @Enumerated(EnumType.STRING)
@@ -78,8 +85,14 @@ public class Post extends BaseEntity {
     if (title == null || title.isBlank()) {
       throw new BaseException(PostErrorCode.TITLE_REQUIRED);
     }
+    if (title.length() > MAX_TITLE_LENGTH) {
+      throw new BaseException(PostErrorCode.TITLE_TOO_LONG);
+    }
     if (content == null || content.isBlank()) {
       throw new BaseException(PostErrorCode.CONTENT_REQUIRED);
+    }
+    if (content.length() > MAX_CONTENT_LENGTH) {
+      throw new BaseException(PostErrorCode.CONTENT_TOO_LONG);
     }
     if (category == null) {
       throw new BaseException(PostErrorCode.CATEGORY_REQUIRED);
