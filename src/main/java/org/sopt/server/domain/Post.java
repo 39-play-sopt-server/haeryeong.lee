@@ -8,14 +8,19 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 @Entity
 @SQLRestriction("deleted_at is null")
+@Table(
+    indexes =
+        @Index(name = "idx_post_deleted_at_created_at_id", columnList = "deleted_at, created_at, id"))
 public class Post extends BaseEntity {
   public static final int MAX_TITLE_LENGTH = 100;
   public static final int MAX_CONTENT_LENGTH = 10_000;
