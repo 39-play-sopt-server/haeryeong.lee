@@ -6,12 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
+import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
+import org.sopt.server.domain.exception.MemberErrorCode;
 import org.sopt.server.domain.exception.PostErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,23 +26,32 @@ class PostServiceTest {
 
   @Autowired private PostService postService;
   @Autowired private PostRepository postRepository;
+  @Autowired private MemberRepository memberRepository;
+
+  private long memberId;
+
+  @BeforeEach
+  void setUp() {
+    memberId = memberRepository.save(new Member("작성자")).getId();
+  }
 
   @AfterEach
   void tearDown() {
     postRepository.deleteAll();
+    memberRepository.deleteAll();
   }
 
   @Test
   @DisplayName("게시글을 작성하면 id로 조회할 수 있다")
   void createAndGet() {
-    long id = postService.createPost("제목", "내용", Category.FREE, "작성자");
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
     Post post = postService.getPost(id);
 
     assertEquals("제목", post.getTitle());
     assertEquals("내용", post.getContent());
     assertEquals(Category.FREE, post.getCategory());
-    assertEquals("작성자", post.getAuthor());
+    assertEquals("작성자", post.getAuthor().getName());
   }
 
   @Test
@@ -47,18 +60,50 @@ class PostServiceTest {
     BaseException e =
         assertThrows(
             BaseException.class,
-            () -> postService.createPost(" ", "내용", Category.FREE, "작성자"));
+            () -> postService.createPost(" ", "내용", Category.FREE, memberId));
 
     assertEquals(PostErrorCode.TITLE_REQUIRED, e.getErrorCode());
     assertTrue(postService.getPosts().isEmpty());
   }
 
   @Test
+  @DisplayName("작성자 없이 게시글을 작성하면 예외가 발생한다")
+  void createWithoutAuthor() {
+    BaseException e =
+        assertThrows(
+            BaseException.class, () -> postService.createPost("제목", "내용", Category.FREE, null));
+
+    assertEquals(PostErrorCode.AUTHOR_REQUIRED, e.getErrorCode());
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 회원으로 게시글을 작성하면 예외가 발생한다")
+  void createWithUnknownAuthor() {
+    BaseException e =
+        assertThrows(
+            BaseException.class,
+            () -> postService.createPost("제목", "내용", Category.FREE, NOT_EXIST_ID));
+
+    assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
+    assertTrue(postService.getPosts().isEmpty());
+  }
+
+  @Test
+  @DisplayName("게시글 목록에서 작성자 이름을 확인할 수 있다")
+  void getPostsWithAuthorName() {
+    postService.createPost("제목", "내용", Category.FREE, memberId);
+
+    List<Post> posts = postService.getPosts();
+
+    assertEquals("작성자", posts.get(0).getAuthor().getName());
+  }
+
+  @Test
   @DisplayName("게시글 목록은 id 순서로 조회된다")
   void getPosts() {
-    long first = postService.createPost("첫째", "내용", Category.FREE, "작성자");
-    long second = postService.createPost("둘째", "내용", Category.QUESTION, "작성자");
-    long third = postService.createPost("셋째", "내용", Category.INFO, "작성자");
+    long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
+    long second = postService.createPost("둘째", "내용", Category.QUESTION, memberId);
+    long third = postService.createPost("셋째", "내용", Category.INFO, memberId);
 
     List<Post> posts = postService.getPosts();
 
@@ -77,7 +122,7 @@ class PostServiceTest {
   @Test
   @DisplayName("게시글을 수정하면 다시 조회했을 때 수정된 값이 나온다")
   void update() {
-    long id = postService.createPost("제목", "내용", Category.FREE, "작성자");
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
     postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE);
 
@@ -101,7 +146,7 @@ class PostServiceTest {
   @Test
   @DisplayName("게시글을 삭제하면 더 이상 조회되지 않는다")
   void delete() {
-    long id = postService.createPost("제목", "내용", Category.FREE, "작성자");
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
     postService.deletePost(id);
 
@@ -121,11 +166,11 @@ class PostServiceTest {
   @Test
   @DisplayName("앞선 게시글을 삭제해도 나머지 게시글의 id는 바뀌지 않는다")
   void idIsStableAfterDelete() {
-    long first = postService.createPost("첫째", "내용", Category.FREE, "작성자");
-    long second = postService.createPost("둘째", "내용", Category.FREE, "작성자");
+    long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
+    long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
     postService.deletePost(first);
-    long third = postService.createPost("셋째", "내용", Category.FREE, "작성자");
+    long third = postService.createPost("셋째", "내용", Category.FREE, memberId);
 
     assertEquals("둘째", postService.getPost(second).getTitle());
     assertEquals("셋째", postService.getPost(third).getTitle());
@@ -134,7 +179,7 @@ class PostServiceTest {
   @Test
   @DisplayName("게시글을 상세 조회할 때마다 조회수가 1씩 증가한다")
   void getIncreasesViewCount() {
-    long id = postService.createPost("제목", "내용", Category.FREE, "작성자");
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
     assertEquals(1L, postService.getPost(id).getViewCount());
     assertEquals(2L, postService.getPost(id).getViewCount());
@@ -143,8 +188,8 @@ class PostServiceTest {
   @Test
   @DisplayName("목록 조회, 수정, 삭제는 조회수를 증가시키지 않는다")
   void onlyGetIncreasesViewCount() {
-    long first = postService.createPost("첫째", "내용", Category.FREE, "작성자");
-    long second = postService.createPost("둘째", "내용", Category.FREE, "작성자");
+    long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
+    long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
     postService.getPosts();
     postService.updatePost(first, "새 제목", "새 내용", Category.NOTICE);

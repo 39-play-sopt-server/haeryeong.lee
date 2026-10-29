@@ -14,17 +14,18 @@ import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 class PostTest {
+  private static final Member AUTHOR = new Member("작성자");
 
   @Test
   @DisplayName("유효한 값으로 게시글을 생성하면 수정일은 작성일과 같다")
   void create() {
-    Post post = new Post("제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
 
     assertNull(post.getId());
     assertEquals("제목", post.getTitle());
     assertEquals("내용", post.getContent());
     assertEquals(Category.FREE, post.getCategory());
-    assertEquals("작성자", post.getAuthor());
+    assertEquals(AUTHOR, post.getAuthor());
     assertEquals(post.getCreatedAt(), post.getUpdatedAt());
   }
 
@@ -35,7 +36,7 @@ class PostTest {
   void createWithBlankTitle(String title) {
     BaseException e =
         assertThrows(
-            BaseException.class, () -> new Post(title, "내용", Category.FREE, "작성자"));
+            BaseException.class, () -> new Post(title, "내용", Category.FREE, AUTHOR));
 
     assertEquals(PostErrorCode.TITLE_REQUIRED, e.getErrorCode());
   }
@@ -47,19 +48,16 @@ class PostTest {
   void createWithBlankContent(String content) {
     BaseException e =
         assertThrows(
-            BaseException.class, () -> new Post("제목", content, Category.FREE, "작성자"));
+            BaseException.class, () -> new Post("제목", content, Category.FREE, AUTHOR));
 
     assertEquals(PostErrorCode.CONTENT_REQUIRED, e.getErrorCode());
   }
 
-  @ParameterizedTest
-  @NullSource
-  @ValueSource(strings = {"", " ", "   ", "\t", "\n"})
-  @DisplayName("작성자가 비어있거나 공백이면 생성할 수 없다")
-  void createWithBlankAuthor(String author) {
+  @Test
+  @DisplayName("작성자가 없으면 생성할 수 없다")
+  void createWithoutAuthor() {
     BaseException e =
-        assertThrows(
-            BaseException.class, () -> new Post("제목", "내용", Category.FREE, author));
+        assertThrows(BaseException.class, () -> new Post("제목", "내용", Category.FREE, null));
 
     assertEquals(PostErrorCode.AUTHOR_REQUIRED, e.getErrorCode());
   }
@@ -68,7 +66,7 @@ class PostTest {
   @DisplayName("카테고리가 없으면 생성할 수 없다")
   void createWithoutCategory() {
     BaseException e =
-        assertThrows(BaseException.class, () -> new Post("제목", "내용", null, "작성자"));
+        assertThrows(BaseException.class, () -> new Post("제목", "내용", null, AUTHOR));
 
     assertEquals(PostErrorCode.CATEGORY_REQUIRED, e.getErrorCode());
   }
@@ -76,21 +74,21 @@ class PostTest {
   @Test
   @DisplayName("수정하면 제목, 내용, 카테고리가 바뀌고 작성자와 작성일은 유지된다")
   void update() {
-    Post post = new Post("제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
 
     post.update("새 제목", "새 내용", Category.NOTICE);
 
     assertEquals("새 제목", post.getTitle());
     assertEquals("새 내용", post.getContent());
     assertEquals(Category.NOTICE, post.getCategory());
-    assertEquals("작성자", post.getAuthor());
+    assertEquals(AUTHOR, post.getAuthor());
     assertFalse(post.getUpdatedAt().isBefore(post.getCreatedAt()));
   }
 
   @Test
   @DisplayName("수정 값이 유효하지 않으면 기존 값이 그대로 유지된다")
   void updateWithBlankContent() {
-    Post post = new Post("제목", "내용", Category.FREE, "작성자");
+    Post post = new Post("제목", "내용", Category.FREE, AUTHOR);
 
     BaseException e =
         assertThrows(BaseException.class, () -> post.update("새 제목", " ", Category.NOTICE));

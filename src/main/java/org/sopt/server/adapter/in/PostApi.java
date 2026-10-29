@@ -11,6 +11,7 @@ public interface PostApi {
   @Operation(summary = "게시글 작성")
   @ApiResponse(responseCode = "201", description = "작성 성공")
   @ApiResponse(responseCode = "400", description = "제목/내용/작성자 누락 또는 잘못된 카테고리")
+  @ApiResponse(responseCode = "404", description = "존재하지 않는 회원")
   BaseResponse<Void> createPost(PostCreateRequest request);
 
   @Operation(summary = "게시글 목록 조회")

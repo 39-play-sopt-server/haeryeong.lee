@@ -46,10 +46,10 @@ public class PostClient {
     }
 
     String category = view.readCategory(categories.data());
-    String author = view.readAuthor();
+    long memberId = view.readMemberId();
     String title = view.readTitle();
     String content = view.readContent();
-    PostCreateRequest request = new PostCreateRequest(title, content, category, author);
+    PostCreateRequest request = new PostCreateRequest(title, content, category, memberId);
     if (isFailure(controller.createPost(request))) {
       return;
     }

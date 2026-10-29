@@ -5,7 +5,7 @@ import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Post;
 
 public interface PostUseCase {
-  long createPost(String title, String content, Category category, String author);
+  long createPost(String title, String content, Category category, Long memberId);
 
   List<Post> getPosts();
 

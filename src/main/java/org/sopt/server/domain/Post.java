@@ -3,9 +3,12 @@ package org.sopt.server.domain;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
@@ -22,16 +25,17 @@ public class Post {
   @Enumerated(EnumType.STRING)
   private Category category;
 
-//  private final String author;
-  private String author;
-//  private final LocalDateTime createdAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "member_id", nullable = false)
+  private Member author;
+
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
   private long viewCount;
 
   protected Post() {}
 
-  public Post(String title, String content, Category category, String author) {
+  public Post(String title, String content, Category category, Member author) {
     validate(title, content, category);
     validateAuthor(author);
     this.title = title;
@@ -58,7 +62,7 @@ public class Post {
     return this.category;
   }
 
-  public String getAuthor() {
+  public Member getAuthor() {
     return this.author;
   }
 
@@ -98,8 +102,8 @@ public class Post {
     }
   }
 
-  private void validateAuthor(String author) {
-    if (author == null || author.isBlank()) {
+  private void validateAuthor(Member author) {
+    if (author == null) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
   }

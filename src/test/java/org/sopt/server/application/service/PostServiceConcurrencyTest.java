@@ -9,10 +9,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
+import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +28,25 @@ class PostServiceConcurrencyTest {
 
   @Autowired private PostService postService;
   @Autowired private PostRepository postRepository;
+  @Autowired private MemberRepository memberRepository;
+
+  private long memberId;
+
+  @BeforeEach
+  void setUp() {
+    memberId = memberRepository.save(new Member("작성자")).getId();
+  }
 
   @AfterEach
   void tearDown() {
     postRepository.deleteAll();
+    memberRepository.deleteAll();
   }
 
   @Test
   @DisplayName("여러 사용자가 동시에 게시글을 작성해도 모든 게시글이 서로 다른 id로 저장된다")
   void createConcurrently() throws Exception {
-    runConcurrently(() -> postService.createPost("제목", "내용", Category.FREE, "작성자"));
+    runConcurrently(() -> postService.createPost("제목", "내용", Category.FREE, memberId));
 
     List<Post> posts = postService.getPosts();
     assertEquals(REQUEST_COUNT, posts.size());
@@ -44,7 +56,7 @@ class PostServiceConcurrencyTest {
   @Test
   @DisplayName("여러 사용자가 같은 게시글을 동시에 조회해도 조회수가 누락되지 않는다")
   void getConcurrently() throws Exception {
-    long id = postService.createPost("제목", "내용", Category.FREE, "작성자");
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
     runConcurrently(() -> postService.getPost(id));
 
@@ -56,7 +68,7 @@ class PostServiceConcurrencyTest {
   void getWhileDelete() throws Exception {
     List<Long> ids = new ArrayList<>();
     for (int i = 0; i < 1_000; i++) {
-      ids.add(postService.createPost("제목", "내용", Category.FREE, "작성자"));
+      ids.add(postService.createPost("제목", "내용", Category.FREE, memberId));
     }
 
     // 게시글마다 조회와 삭제를 동시에 시도한다

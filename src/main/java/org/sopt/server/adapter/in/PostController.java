@@ -33,7 +33,7 @@ public class PostController implements PostApi {
   @ResponseStatus(HttpStatus.CREATED)
   public BaseResponse<Void> createPost(@RequestBody PostCreateRequest request) {
     postUseCase.createPost(
-        request.title(), request.content(), Category.from(request.category()), request.author());
+        request.title(), request.content(), Category.from(request.category()), request.memberId());
     return BaseResponse.success(null);
   }
 
