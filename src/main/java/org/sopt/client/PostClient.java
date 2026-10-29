@@ -4,6 +4,7 @@ import java.util.List;
 import org.sopt.server.adapter.in.BaseResponse;
 import org.sopt.server.adapter.in.PostController;
 import org.sopt.server.adapter.in.PostCreateRequest;
+import org.sopt.server.adapter.in.PostPageResponse;
 import org.sopt.server.adapter.in.PostResponse;
 import org.sopt.server.adapter.in.PostUpdateRequest;
 
@@ -46,10 +47,10 @@ public class PostClient {
     }
 
     String category = view.readCategory(categories.data());
-    String author = view.readAuthor();
+    long memberId = view.readMemberId();
     String title = view.readTitle();
     String content = view.readContent();
-    PostCreateRequest request = new PostCreateRequest(title, content, category, author);
+    PostCreateRequest request = new PostCreateRequest(title, content, category, memberId);
     if (isFailure(controller.createPost(request))) {
       return;
     }
@@ -59,12 +60,12 @@ public class PostClient {
   private void readPosts() {
     view.printMessage("\n=== 게시글 목록 ===");
 
-    BaseResponse<List<PostResponse>> response = controller.getPosts();
+    BaseResponse<PostPageResponse> response = controller.getPosts(0, 10);
     if (isFailure(response)) {
       return;
     }
 
-    List<PostResponse> posts = response.data();
+    List<PostResponse> posts = response.data().posts();
     if (posts.isEmpty()) {
       view.printMessage("게시글이 없습니다.");
       return;
