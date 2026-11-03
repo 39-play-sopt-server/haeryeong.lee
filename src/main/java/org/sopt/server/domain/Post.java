@@ -1,45 +1,58 @@
 package org.sopt.server.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 @Entity
-public class Post {
+@SQLRestriction("deleted_at is null")
+@Table(
+    indexes =
+        @Index(name = "idx_post_deleted_at_created_at_id", columnList = "deleted_at, created_at, id"))
+public class Post extends BaseEntity {
+  public static final int MAX_TITLE_LENGTH = 100;
+  public static final int MAX_CONTENT_LENGTH = 10_000;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(nullable = false, length = MAX_TITLE_LENGTH)
   private String title;
+
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
 
   @Enumerated(EnumType.STRING)
   private Category category;
 
-//  private final String author;
-  private String author;
-//  private final LocalDateTime createdAt;
-  private LocalDateTime createdAt;
-  private LocalDateTime updatedAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "member_id", nullable = false)
+  private Member author;
+
   private long viewCount;
 
   protected Post() {}
 
-  public Post(String title, String content, Category category, String author) {
+  public Post(String title, String content, Category category, Member author) {
     validate(title, content, category);
     validateAuthor(author);
     this.title = title;
     this.content = content;
     this.category = category;
     this.author = author;
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = this.createdAt;
   }
 
   public Long getId() {
@@ -58,24 +71,12 @@ public class Post {
     return this.category;
   }
 
-  public String getAuthor() {
+  public Member getAuthor() {
     return this.author;
-  }
-
-  public LocalDateTime getCreatedAt() {
-    return this.createdAt;
-  }
-
-  public LocalDateTime getUpdatedAt() {
-    return this.updatedAt;
   }
 
   public long getViewCount() {
     return this.viewCount;
-  }
-
-  public void increaseViewCount() {
-    this.viewCount++;
   }
 
   public void update(String title, String content, Category category) {
@@ -83,23 +84,28 @@ public class Post {
     this.title = title;
     this.content = content;
     this.category = category;
-    this.updatedAt = LocalDateTime.now();
   }
 
   private void validate(String title, String content, Category category) {
     if (title == null || title.isBlank()) {
       throw new BaseException(PostErrorCode.TITLE_REQUIRED);
     }
+    if (title.length() > MAX_TITLE_LENGTH) {
+      throw new BaseException(PostErrorCode.TITLE_TOO_LONG);
+    }
     if (content == null || content.isBlank()) {
       throw new BaseException(PostErrorCode.CONTENT_REQUIRED);
+    }
+    if (content.length() > MAX_CONTENT_LENGTH) {
+      throw new BaseException(PostErrorCode.CONTENT_TOO_LONG);
     }
     if (category == null) {
       throw new BaseException(PostErrorCode.CATEGORY_REQUIRED);
     }
   }
 
-  private void validateAuthor(String author) {
-    if (author == null || author.isBlank()) {
+  private void validateAuthor(Member author) {
+    if (author == null) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
   }

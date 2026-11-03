@@ -31,9 +31,9 @@ public class PostView {
     return scanner.nextLine();
   }
 
-  public String readAuthor() {
-    System.out.print("작성자: ");
-    return scanner.nextLine();
+  public long readMemberId() {
+    System.out.print("작성자 회원 번호: ");
+    return Long.parseLong(scanner.nextLine());
   }
 
   public String readTitle() {
