@@ -8,3 +8,6 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+
+cors:
+  allowed-origins: http://localhost:3000
