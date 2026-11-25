@@ -1,4 +1,4 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.post.dto;
 
 import java.time.LocalDateTime;
 import org.sopt.server.domain.Post;

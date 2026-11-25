@@ -1,13 +1,13 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.member;
 
+import org.sopt.server.adapter.in.common.BaseResponse;
+import org.sopt.server.adapter.in.member.dto.MemberResponse;
 import org.sopt.server.application.port.in.MemberUseCase;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,10 +20,9 @@ public class MemberController implements MemberApi {
   }
 
   @Override
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public BaseResponse<MemberResponse> createMember(@RequestBody MemberCreateRequest request) {
-    return BaseResponse.success(MemberResponse.from(memberUseCase.createMember(request.name())));
+  @GetMapping("/me")
+  public BaseResponse<MemberResponse> getMe(@AuthenticationPrincipal Long memberId) {
+    return BaseResponse.success(MemberResponse.from(memberUseCase.getMember(memberId)));
   }
 
   @Override

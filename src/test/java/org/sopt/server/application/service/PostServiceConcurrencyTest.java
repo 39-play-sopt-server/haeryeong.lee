@@ -33,7 +33,7 @@ class PostServiceConcurrencyTest {
 
   @BeforeEach
   void setUp() {
-    memberId = memberRepository.save(new Member("작성자")).getId();
+    memberId = memberRepository.save(new Member("작성자", "writer@sopt.org", "password")).getId();
   }
 
   @AfterEach

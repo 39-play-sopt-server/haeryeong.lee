@@ -3,7 +3,7 @@ package org.sopt.server.application.port.in;
 import org.sopt.server.domain.Member;
 
 public interface MemberUseCase {
-  Member createMember(String name);
+  Member getMember(long id);
 
   void deleteMember(long id);
 }

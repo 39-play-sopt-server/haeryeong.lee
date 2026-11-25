@@ -1,4 +1,4 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.post.dto;
 
 import java.util.List;
 import org.sopt.server.domain.Post;

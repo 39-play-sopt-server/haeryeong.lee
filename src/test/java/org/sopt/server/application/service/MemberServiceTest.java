@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class MemberServiceTest {
   private static final long NOT_EXIST_ID = Long.MAX_VALUE;
 
+  private final AtomicInteger emailSequence = new AtomicInteger();
+
   @Autowired private MemberService memberService;
   @Autowired private PostService postService;
   @Autowired private MemberRepository memberRepository;
@@ -39,28 +42,31 @@ class MemberServiceTest {
   }
 
   @Test
-  @DisplayName("회원을 생성하면 id가 부여되어 저장된다")
-  void create() {
-    Member member = memberService.createMember("이해령");
+  @DisplayName("회원을 id로 조회한다")
+  void getMember() {
+    long id = saveMember("이해령").getId();
 
-    assertTrue(memberRepository.existsById(member.getId()));
+    Member member = memberService.getMember(id);
+
     assertEquals("이해령", member.getName());
   }
 
   @Test
-  @DisplayName("이름이 비어있으면 회원이 저장되지 않는다")
-  void createInvalid() {
-    BaseException e = assertThrows(BaseException.class, () -> memberService.createMember(" "));
+  @DisplayName("삭제된 회원은 조회할 수 없다")
+  void getDeletedMember() {
+    long id = saveMember("이해령").getId();
+    memberService.deleteMember(id);
 
-    assertEquals(MemberErrorCode.NAME_REQUIRED, e.getErrorCode());
-    assertEquals(0, memberRepository.count());
+    BaseException e = assertThrows(BaseException.class, () -> memberService.getMember(id));
+
+    assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
   }
 
   @Test
   @DisplayName("회원을 삭제하면 회원이 작성한 게시글도 함께 삭제된다")
   void deleteWithPosts() {
-    long author = memberService.createMember("작성자").getId();
-    long other = memberService.createMember("다른 회원").getId();
+    long author = saveMember("작성자").getId();
+    long other = saveMember("다른 회원").getId();
     postService.createPost("제목", "내용", Category.FREE, author);
     postService.createPost("제목", "내용", Category.FREE, author);
     long otherPost = postService.createPost("제목", "내용", Category.FREE, other);
@@ -75,7 +81,7 @@ class MemberServiceTest {
   @Test
   @DisplayName("회원을 삭제해도 회원과 게시글 데이터는 남고 같은 삭제 시각이 기록된다")
   void deleteIsSoft() {
-    long author = memberService.createMember("작성자").getId();
+    long author = saveMember("작성자").getId();
     postService.createPost("제목", "내용", Category.FREE, author);
     postService.createPost("제목", "내용", Category.FREE, author);
 
@@ -94,7 +100,7 @@ class MemberServiceTest {
   @Test
   @DisplayName("삭제된 회원으로는 게시글을 작성할 수 없다")
   void createPostByDeletedMember() {
-    long author = memberService.createMember("작성자").getId();
+    long author = saveMember("작성자").getId();
     memberService.deleteMember(author);
 
     BaseException e =
@@ -108,7 +114,7 @@ class MemberServiceTest {
   @Test
   @DisplayName("이미 삭제된 회원은 다시 삭제할 수 없다")
   void deleteDeleted() {
-    long id = memberService.createMember("작성자").getId();
+    long id = saveMember("작성자").getId();
     memberService.deleteMember(id);
 
     BaseException e = assertThrows(BaseException.class, () -> memberService.deleteMember(id));
@@ -130,8 +136,13 @@ class MemberServiceTest {
   void createWithMaxLength() {
     String name = "가".repeat(Member.MAX_NAME_LENGTH);
 
-    Member member = memberService.createMember(name);
+    Member member = saveMember(name);
 
     assertEquals(name, memberRepository.findById(member.getId()).orElseThrow().getName());
+  }
+
+  private Member saveMember(String name) {
+    return memberRepository.save(
+        new Member(name, "member" + emailSequence.incrementAndGet() + "@sopt.org", "password"));
   }
 }

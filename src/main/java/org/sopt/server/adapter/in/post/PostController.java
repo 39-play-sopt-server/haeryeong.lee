@@ -1,7 +1,12 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.post;
 
 import java.util.Arrays;
 import java.util.List;
+import org.sopt.server.adapter.in.common.BaseResponse;
+import org.sopt.server.adapter.in.post.dto.PostCreateRequest;
+import org.sopt.server.adapter.in.post.dto.PostPageResponse;
+import org.sopt.server.adapter.in.post.dto.PostResponse;
+import org.sopt.server.adapter.in.post.dto.PostUpdateRequest;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.domain.Category;
 import org.springframework.http.HttpStatus;

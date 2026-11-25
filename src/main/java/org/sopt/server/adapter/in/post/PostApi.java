@@ -1,9 +1,14 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.post;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.sopt.server.adapter.in.common.BaseResponse;
+import org.sopt.server.adapter.in.post.dto.PostCreateRequest;
+import org.sopt.server.adapter.in.post.dto.PostPageResponse;
+import org.sopt.server.adapter.in.post.dto.PostResponse;
+import org.sopt.server.adapter.in.post.dto.PostUpdateRequest;
 
 @Tag(name = "Post", description = "게시글 API")
 public interface PostApi {

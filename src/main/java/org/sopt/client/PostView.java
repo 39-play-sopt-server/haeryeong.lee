@@ -3,7 +3,7 @@ package org.sopt.client;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
-import org.sopt.server.adapter.in.PostResponse;
+import org.sopt.server.adapter.in.post.dto.PostResponse;
 
 public class PostView {
   private static final DateTimeFormatter DATE_TIME_FORMATTER =
