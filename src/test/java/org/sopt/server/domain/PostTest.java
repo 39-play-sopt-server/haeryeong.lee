@@ -16,7 +16,7 @@ import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
 class PostTest {
-  private static final Member AUTHOR = new Member("작성자");
+  private static final Member AUTHOR = new Member("작성자", "writer@sopt.org", "password");
 
   @Test
   @DisplayName("유효한 값으로 게시글을 생성한다")

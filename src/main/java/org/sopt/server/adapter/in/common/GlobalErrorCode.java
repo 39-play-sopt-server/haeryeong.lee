@@ -1,4 +1,4 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.common;
 
 import org.sopt.server.domain.exception.ErrorCode;
 import org.sopt.server.domain.exception.ErrorType;

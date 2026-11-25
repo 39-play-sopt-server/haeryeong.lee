@@ -1,4 +1,4 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.post.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

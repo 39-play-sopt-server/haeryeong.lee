@@ -11,3 +11,7 @@ spring:
 
 cors:
   allowed-origins: http://localhost:3000
+
+jwt:
+  secret: b2aQIy+xHJTlvXqH40V79BX/C4O1TEsT+/BpLQaTiCA=
+  access-token-expiration: 1800000

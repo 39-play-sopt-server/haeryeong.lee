@@ -21,17 +21,21 @@ public class MemberService implements MemberUseCase {
   }
 
   @Override
-  public Member createMember(String name) {
-    return memberRepository.save(new Member(name));
+  @Transactional(readOnly = true)
+  public Member getMember(long id) {
+    return findMember(id);
   }
 
   @Override
   public void deleteMember(long id) {
-    Member member =
-        memberRepository
-            .findById(id)
-            .orElseThrow(() -> new BaseException(MemberErrorCode.MEMBER_NOT_FOUND));
+    Member member = findMember(id);
     member.delete();
     postRepository.deleteAllByAuthor(member, member.getDeletedAt());
+  }
+
+  private Member findMember(long id) {
+    return memberRepository
+        .findById(id)
+        .orElseThrow(() -> new BaseException(MemberErrorCode.MEMBER_NOT_FOUND));
   }
 }

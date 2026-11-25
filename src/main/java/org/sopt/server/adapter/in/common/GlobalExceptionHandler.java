@@ -1,4 +1,4 @@
-package org.sopt.server.adapter.in;
+package org.sopt.server.adapter.in.common;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,7 +23,9 @@ public class GlobalExceptionHandler {
     HttpStatus status =
         switch (errorCode.getType()) {
           case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+          case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
           case NOT_FOUND -> HttpStatus.NOT_FOUND;
+          case CONFLICT -> HttpStatus.CONFLICT;
           case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     return failure(status, errorCode);
