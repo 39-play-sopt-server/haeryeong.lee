@@ -1,7 +1,5 @@
 package org.sopt.server.adapter.in.post;
 
-import java.util.Arrays;
-import java.util.List;
 import org.sopt.server.adapter.in.common.BaseResponse;
 import org.sopt.server.adapter.in.post.dto.PostCreateRequest;
 import org.sopt.server.adapter.in.post.dto.PostPageResponse;
@@ -29,10 +27,6 @@ public class PostController implements PostApi {
 
   public PostController(PostUseCase postUseCase) {
     this.postUseCase = postUseCase;
-  }
-
-  public BaseResponse<List<String>> getCategories() {
-    return BaseResponse.success(Arrays.stream(Category.values()).map(Category::getLabel).toList());
   }
 
   @Override
