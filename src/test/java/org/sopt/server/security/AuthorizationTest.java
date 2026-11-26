@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -122,6 +124,62 @@ class AuthorizationTest {
     mockMvc
         .perform(get("/api/v1/members/me").header(HttpHeaders.AUTHORIZATION, bearer(writerToken)))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("게시글 목록과 상세 조회는 토큰 없이도, 유효하지 않은 토큰을 붙여도 조회할 수 있다")
+  void readPostsWithoutAuthentication() throws Exception {
+    long postId = createPost(writerToken);
+
+    mockMvc.perform(get("/api/v1/posts")).andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/posts/{id}", postId)).andExpect(status().isOk());
+    mockMvc
+        .perform(get("/api/v1/posts").header(HttpHeaders.AUTHORIZATION, bearer("invalid")))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  @DisplayName("게시글 작성·수정·삭제와 회원 탈퇴는 토큰이 없으면 401을 응답한다")
+  void writeRequiresAuthentication() throws Exception {
+    long postId = createPost(writerToken);
+
+    expectUnauthorized(
+        mockMvc.perform(
+            post("/api/v1/posts").contentType(MediaType.APPLICATION_JSON).content(POST_BODY)));
+    expectUnauthorized(
+        mockMvc.perform(
+            put("/api/v1/posts/{id}", postId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(POST_BODY)));
+    expectUnauthorized(mockMvc.perform(delete("/api/v1/posts/{id}", postId)));
+    expectUnauthorized(mockMvc.perform(delete("/api/v1/members/me")));
+  }
+
+  @Test
+  @DisplayName("공개 목록에 없는 경로는 auth 하위라도 인증을 요구한다")
+  void unknownPathRequiresAuthentication() throws Exception {
+    expectUnauthorized(mockMvc.perform(get("/api/v1/auth/login")));
+    expectUnauthorized(mockMvc.perform(post("/api/v1/auth/unknown")));
+    expectUnauthorized(mockMvc.perform(get("/api/v1/admin")));
+  }
+
+  @Test
+  @DisplayName("회원 탈퇴 시 Refresh Token 쿠키를 삭제하고 DB의 Refresh Token도 폐기한다")
+  void withdrawalExpiresRefreshCookie() throws Exception {
+    mockMvc
+        .perform(delete("/api/v1/members/me").header(HttpHeaders.AUTHORIZATION, bearer(writerToken)))
+        .andExpect(status().isOk())
+        .andExpect(cookie().maxAge("refresh_token", 0))
+        .andExpect(cookie().path("refresh_token", "/api/v1/auth"));
+
+    assertEquals(
+        0L,
+        jdbcTemplate.queryForObject(
+            "select count(*) from refresh_token where member_id = ?", Long.class, writerId));
+  }
+
+  private void expectUnauthorized(ResultActions result) throws Exception {
+    result.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("AUTH-E001"));
   }
 
   private void signup(String name, String email) throws Exception {

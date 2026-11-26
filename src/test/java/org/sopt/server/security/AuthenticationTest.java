@@ -94,7 +94,14 @@ class AuthenticationTest {
   @DisplayName("토큰 없이 요청하면 공통 응답 형식으로 401을 응답한다")
   void noToken() throws Exception {
     expectUnauthorized(mockMvc.perform(get("/api/v1/members/me")));
-    expectUnauthorized(mockMvc.perform(get("/api/v1/posts")));
+    expectUnauthorized(
+        mockMvc.perform(
+            post("/api/v1/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"title": "제목", "content": "내용", "category": "자유"}
+                    """)));
   }
 
   @Test
