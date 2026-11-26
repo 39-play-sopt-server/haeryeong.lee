@@ -18,6 +18,10 @@ public class Member extends BaseEntity {
   public static final int MIN_PASSWORD_LENGTH = 8;
   public static final int MAX_PASSWORD_LENGTH = 20;
 
+  private static final String WITHDRAWN_NAME = "탈퇴한 회원";
+  private static final String WITHDRAWN_EMAIL_PREFIX = "deleted_";
+  private static final String WITHDRAWN_EMAIL_DOMAIN = "@withdrawn.invalid";
+
   private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
   @Id
@@ -41,6 +45,13 @@ public class Member extends BaseEntity {
     this.name = name;
     this.email = email;
     this.password = password;
+  }
+
+  public void withdraw() {
+    this.name = WITHDRAWN_NAME;
+    this.email = WITHDRAWN_EMAIL_PREFIX + this.id + WITHDRAWN_EMAIL_DOMAIN;
+    this.password = "";
+    delete();
   }
 
   public static void validateRawPassword(String rawPassword) {

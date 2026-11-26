@@ -33,7 +33,7 @@ public class MemberService implements MemberUseCase {
   @Override
   public void deleteMember(long id) {
     Member member = findMember(id);
-    member.delete();
+    member.withdraw();
     postRepository.deleteAllByAuthor(member, member.getDeletedAt());
     authUseCase.revokeAllRefreshTokens(id);
   }

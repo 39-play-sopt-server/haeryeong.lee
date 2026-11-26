@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
@@ -169,6 +170,26 @@ class MemberServiceTest {
     assertNotNull(
         jdbcTemplate.queryForObject(
             "select deleted_at from member where id = ?", LocalDateTime.class, member));
+  }
+
+  @Test
+  @DisplayName("회원을 삭제하면 이름, 이메일, 비밀번호가 익명화되어 저장된다")
+  void deleteAnonymizesPersonalInformation() {
+    Member member = saveMember("이해령");
+    String email = member.getEmail();
+
+    memberService.deleteMember(member.getId());
+
+    Map<String, Object> row =
+        jdbcTemplate.queryForMap(
+            "select name, email, password from member where id = ?", member.getId());
+    assertEquals("탈퇴한 회원", row.get("name"));
+    assertEquals("deleted_" + member.getId() + "@withdrawn.invalid", row.get("email"));
+    assertEquals("", row.get("password"));
+    assertEquals(
+        0L,
+        jdbcTemplate.queryForObject(
+            "select count(*) from member where email = ?", Long.class, email));
   }
 
   private void saveRefreshToken(long memberId) {

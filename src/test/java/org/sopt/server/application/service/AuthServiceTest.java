@@ -76,13 +76,16 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("탈퇴한 회원의 이메일로 가입하면 500이 아닌 중복 이메일 예외가 발생한다")
-  void signupWithDeletedMemberEmail() {
+  @DisplayName("탈퇴한 회원의 이메일로 다시 가입하면 새 회원으로 가입되고 로그인할 수 있다")
+  void signupWithWithdrawnMemberEmail() {
     long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
     memberService.deleteMember(id);
 
-    assertErrorCode(
-        MemberErrorCode.DUPLICATE_EMAIL, () -> authService.signup(NAME, EMAIL, PASSWORD));
+    long newId = authService.signup(NAME, EMAIL, "new-password1").getId();
+
+    assertNotEquals(id, newId);
+    AuthTokens tokens = authService.login(EMAIL, "new-password1");
+    assertEquals(newId, jwtProvider.getMemberId(tokens.accessToken()));
   }
 
   @Test
