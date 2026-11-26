@@ -1,17 +1,18 @@
 package org.sopt.server.application.service;
 
+import org.sopt.server.application.event.MemberWithdrawnEvent;
+import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.in.PostUseCase;
-import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
-import org.sopt.server.domain.exception.MemberErrorCode;
 import org.sopt.server.domain.exception.PostErrorCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +24,11 @@ public class PostService implements PostUseCase {
       Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 
   private final PostRepository postRepository;
-  private final MemberRepository memberRepository;
+  private final MemberUseCase memberUseCase;
 
-  public PostService(PostRepository postRepository, MemberRepository memberRepository) {
+  public PostService(PostRepository postRepository, MemberUseCase memberUseCase) {
     this.postRepository = postRepository;
-    this.memberRepository = memberRepository;
+    this.memberUseCase = memberUseCase;
   }
 
   @Override
@@ -84,8 +85,11 @@ public class PostService implements PostUseCase {
     if (memberId == null) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
-    return memberRepository
-        .findById(memberId)
-        .orElseThrow(() -> new BaseException(MemberErrorCode.MEMBER_NOT_FOUND));
+    return memberUseCase.getMember(memberId);
+  }
+
+  @EventListener
+  public void deleteAllByWithdrawnAuthor(MemberWithdrawnEvent event) {
+    postRepository.deleteAllByAuthorId(event.memberId(), event.withdrawnAt());
   }
 }

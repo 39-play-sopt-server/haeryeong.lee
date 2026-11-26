@@ -11,7 +11,5 @@ public interface AuthUseCase {
 
   void logout(String refreshToken);
 
-  void revokeAllRefreshTokens(long memberId);
-
   int deleteExpiredRefreshTokens();
 }

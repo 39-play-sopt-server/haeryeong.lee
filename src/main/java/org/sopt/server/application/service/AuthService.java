@@ -3,9 +3,10 @@ package org.sopt.server.application.service;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.sopt.server.application.event.MemberWithdrawnEvent;
 import org.sopt.server.application.port.in.AuthTokens;
 import org.sopt.server.application.port.in.AuthUseCase;
-import org.sopt.server.application.port.out.MemberRepository;
+import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.out.RefreshTokenRepository;
 import org.sopt.server.application.port.out.TokenProvider;
 import org.sopt.server.application.port.out.TokenProvider.IssuedRefreshToken;
@@ -14,8 +15,7 @@ import org.sopt.server.domain.Member;
 import org.sopt.server.domain.RefreshToken;
 import org.sopt.server.domain.exception.AuthErrorCode;
 import org.sopt.server.domain.exception.BaseException;
-import org.sopt.server.domain.exception.MemberErrorCode;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,18 +23,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class AuthService implements AuthUseCase {
-  private final MemberRepository memberRepository;
+  private final MemberUseCase memberUseCase;
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
   private final TokenProvider tokenProvider;
   private final String dummyPasswordHash;
 
   public AuthService(
-      MemberRepository memberRepository,
+      MemberUseCase memberUseCase,
       RefreshTokenRepository refreshTokenRepository,
       PasswordEncoder passwordEncoder,
       TokenProvider tokenProvider) {
-    this.memberRepository = memberRepository;
+    this.memberUseCase = memberUseCase;
     this.refreshTokenRepository = refreshTokenRepository;
     this.passwordEncoder = passwordEncoder;
     this.tokenProvider = tokenProvider;
@@ -44,21 +44,12 @@ public class AuthService implements AuthUseCase {
   @Override
   public Member signup(String name, String email, String password) {
     Member.validateRawPassword(password);
-    if (memberRepository.existsByEmail(email)) {
-      throw new BaseException(MemberErrorCode.DUPLICATE_EMAIL);
-    }
-
-    Member member = new Member(name, email, passwordEncoder.encode(password));
-    try {
-      return memberRepository.saveAndFlush(member);
-    } catch (DataIntegrityViolationException e) {
-      throw new BaseException(MemberErrorCode.DUPLICATE_EMAIL);
-    }
+    return memberUseCase.register(name, email, passwordEncoder.encode(password));
   }
 
   @Override
   public AuthTokens login(String email, String password) {
-    Optional<Member> found = memberRepository.findByEmail(email);
+    Optional<Member> found = memberUseCase.findByEmail(email);
     String encodedPassword = found.map(Member::getPassword).orElse(dummyPasswordHash);
     boolean matched = passwordEncoder.matches(password == null ? "" : password, encodedPassword);
 
@@ -84,7 +75,7 @@ public class AuthService implements AuthUseCase {
       refreshTokenRepository.deleteAllByMemberId(claims.memberId());
       throw new BaseException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
-    if (!memberRepository.existsById(claims.memberId())) {
+    if (!memberUseCase.isActiveMember(claims.memberId())) {
       throw new BaseException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
 
@@ -105,9 +96,9 @@ public class AuthService implements AuthUseCase {
     refreshTokenRepository.deleteByJti(claims.jti());
   }
 
-  @Override
-  public void revokeAllRefreshTokens(long memberId) {
-    refreshTokenRepository.deleteAllByMemberId(memberId);
+  @EventListener
+  public void revokeAllRefreshTokens(MemberWithdrawnEvent event) {
+    refreshTokenRepository.deleteAllByMemberId(event.memberId());
   }
 
   @Override

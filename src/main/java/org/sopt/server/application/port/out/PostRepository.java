@@ -3,7 +3,6 @@ package org.sopt.server.application.port.out;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +32,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Modifying
   @Query(
       "update Post p set p.deletedAt = :deletedAt"
-          + " where p.author = :author and p.deletedAt is null")
-  void deleteAllByAuthor(
-      @Param("author") Member author, @Param("deletedAt") LocalDateTime deletedAt);
+          + " where p.author.id = :authorId and p.deletedAt is null")
+  void deleteAllByAuthorId(
+      @Param("authorId") long authorId, @Param("deletedAt") LocalDateTime deletedAt);
 }
