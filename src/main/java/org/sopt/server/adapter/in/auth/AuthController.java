@@ -1,5 +1,6 @@
 package org.sopt.server.adapter.in.auth;
 
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.adapter.in.auth.dto.LoginRequest;
 import org.sopt.server.adapter.in.auth.dto.SignupRequest;
 import org.sopt.server.adapter.in.common.BaseResponse;
@@ -18,17 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController implements AuthApi {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final AuthUseCase authUseCase;
   private final RefreshTokenCookieProvider refreshTokenCookieProvider;
-
-  public AuthController(
-      AuthUseCase authUseCase, RefreshTokenCookieProvider refreshTokenCookieProvider) {
-    this.authUseCase = authUseCase;
-    this.refreshTokenCookieProvider = refreshTokenCookieProvider;
-  }
 
   @Override
   @PostMapping("/signup")

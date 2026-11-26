@@ -6,12 +6,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.regex.Pattern;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.MemberErrorCode;
 
 @Entity
 @SQLRestriction("deleted_at is null")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
   public static final int MAX_NAME_LENGTH = 30;
   public static final int MAX_EMAIL_LENGTH = 100;
@@ -37,8 +42,6 @@ public class Member extends BaseEntity {
   @Column(nullable = false)
   private String password;
 
-  protected Member() {}
-
   public Member(String name, String email, String password) {
     validateName(name);
     validateEmail(email);
@@ -60,22 +63,6 @@ public class Member extends BaseEntity {
         || rawPassword.length() > MAX_PASSWORD_LENGTH) {
       throw new BaseException(MemberErrorCode.PASSWORD_INVALID);
     }
-  }
-
-  public Long getId() {
-    return this.id;
-  }
-
-  public String getName() {
-    return this.name;
-  }
-
-  public String getEmail() {
-    return this.email;
-  }
-
-  public String getPassword() {
-    return this.password;
   }
 
   private void validateName(String name) {

@@ -1,5 +1,6 @@
 package org.sopt.server.adapter.in.member;
 
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.adapter.in.auth.RefreshTokenCookieProvider;
 import org.sopt.server.adapter.in.common.BaseResponse;
 import org.sopt.server.adapter.in.member.dto.MemberResponse;
@@ -16,15 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/members")
+@RequiredArgsConstructor
 public class MemberController implements MemberApi {
   private final MemberUseCase memberUseCase;
   private final RefreshTokenCookieProvider refreshTokenCookieProvider;
-
-  public MemberController(
-      MemberUseCase memberUseCase, RefreshTokenCookieProvider refreshTokenCookieProvider) {
-    this.memberUseCase = memberUseCase;
-    this.refreshTokenCookieProvider = refreshTokenCookieProvider;
-  }
 
   @Override
   @GetMapping("/me")

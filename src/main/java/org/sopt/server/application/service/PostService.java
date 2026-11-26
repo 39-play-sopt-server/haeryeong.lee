@@ -1,5 +1,6 @@
 package org.sopt.server.application.service;
 
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.application.event.MemberWithdrawnEvent;
 import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.in.PostUseCase;
@@ -9,15 +10,16 @@ import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PostService implements PostUseCase {
   private static final int MAX_PAGE_SIZE = 100;
   private static final Sort LATEST =
@@ -25,11 +27,6 @@ public class PostService implements PostUseCase {
 
   private final PostRepository postRepository;
   private final MemberUseCase memberUseCase;
-
-  public PostService(PostRepository postRepository, MemberUseCase memberUseCase) {
-    this.postRepository = postRepository;
-    this.memberUseCase = memberUseCase;
-  }
 
   @Override
   public long createPost(String title, String content, Category category, Long memberId) {

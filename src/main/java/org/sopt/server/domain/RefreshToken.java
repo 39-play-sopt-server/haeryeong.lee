@@ -8,9 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(indexes = @Index(name = "idx_refresh_token_member_id", columnList = "member_id"))
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,27 +30,10 @@ public class RefreshToken {
   @Column(nullable = false)
   private Instant expiresAt;
 
-  protected RefreshToken() {}
-
   public RefreshToken(Long memberId, String jti, Instant expiresAt) {
     this.memberId = memberId;
     this.jti = jti;
     this.expiresAt = expiresAt;
   }
 
-  public Long getId() {
-    return this.id;
-  }
-
-  public Long getMemberId() {
-    return this.memberId;
-  }
-
-  public String getJti() {
-    return this.jti;
-  }
-
-  public Instant getExpiresAt() {
-    return this.expiresAt;
-  }
 }

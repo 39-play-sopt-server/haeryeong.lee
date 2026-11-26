@@ -1,6 +1,7 @@
 package org.sopt.server.application.service;
 
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.application.event.MemberWithdrawnEvent;
 import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.out.MemberRepository;
@@ -15,19 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class MemberService implements MemberUseCase {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final ApplicationEventPublisher eventPublisher;
-
-  public MemberService(
-      MemberRepository memberRepository,
-      PasswordEncoder passwordEncoder,
-      ApplicationEventPublisher eventPublisher) {
-    this.memberRepository = memberRepository;
-    this.passwordEncoder = passwordEncoder;
-    this.eventPublisher = eventPublisher;
-  }
 
   @Override
   public Member register(String name, String email, String encodedPassword) {

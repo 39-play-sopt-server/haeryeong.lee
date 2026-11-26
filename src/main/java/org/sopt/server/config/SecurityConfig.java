@@ -1,5 +1,6 @@
 package org.sopt.server.config;
 
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.security.JwtAuthenticationEntryPoint;
 import org.sopt.server.security.JwtAuthenticationFilter;
 import org.sopt.server.security.jwt.AccessTokenResolver;
@@ -19,6 +20,7 @@ import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
   private static final String[] PUBLIC_POST_PATHS = {
     "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/reissue", "/api/v1/auth/logout"
@@ -31,13 +33,6 @@ public class SecurityConfig {
 
   private final AccessTokenResolver accessTokenResolver;
   private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-
-  public SecurityConfig(
-      AccessTokenResolver accessTokenResolver,
-      JwtAuthenticationEntryPoint authenticationEntryPoint) {
-    this.accessTokenResolver = accessTokenResolver;
-    this.authenticationEntryPoint = authenticationEntryPoint;
-  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

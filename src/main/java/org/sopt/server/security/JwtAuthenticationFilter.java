@@ -7,20 +7,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.security.jwt.AccessTokenResolver;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final AccessTokenResolver accessTokenResolver;
-
-  public JwtAuthenticationFilter(AccessTokenResolver accessTokenResolver) {
-    this.accessTokenResolver = accessTokenResolver;
-  }
 
   @Override
   protected void doFilterInternal(

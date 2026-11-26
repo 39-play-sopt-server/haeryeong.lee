@@ -1,5 +1,6 @@
 package org.sopt.server.adapter.in.post;
 
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.adapter.in.common.BaseResponse;
 import org.sopt.server.adapter.in.post.dto.PostCreateRequest;
 import org.sopt.server.adapter.in.post.dto.PostPageResponse;
@@ -22,12 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/posts")
+@RequiredArgsConstructor
 public class PostController implements PostApi {
   private final PostUseCase postUseCase;
-
-  public PostController(PostUseCase postUseCase) {
-    this.postUseCase = postUseCase;
-  }
 
   @Override
   @PostMapping

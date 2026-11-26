@@ -12,6 +12,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
@@ -21,6 +24,8 @@ import org.sopt.server.domain.exception.PostErrorCode;
 @Table(
     indexes =
         @Index(name = "idx_post_deleted_at_created_at_id", columnList = "deleted_at, created_at, id"))
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends BaseEntity {
   public static final int MAX_TITLE_LENGTH = 100;
   public static final int MAX_CONTENT_LENGTH = 10_000;
@@ -44,8 +49,6 @@ public class Post extends BaseEntity {
 
   private long viewCount;
 
-  protected Post() {}
-
   public Post(String title, String content, Category category, Member author) {
     validate(title, content, category);
     validateAuthor(author);
@@ -53,30 +56,6 @@ public class Post extends BaseEntity {
     this.content = content;
     this.category = category;
     this.author = author;
-  }
-
-  public Long getId() {
-    return this.id;
-  }
-
-  public String getTitle() {
-    return this.title;
-  }
-
-  public String getContent() {
-    return this.content;
-  }
-
-  public Category getCategory() {
-    return this.category;
-  }
-
-  public Member getAuthor() {
-    return this.author;
-  }
-
-  public long getViewCount() {
-    return this.viewCount;
   }
 
   public void update(String title, String content, Category category) {

@@ -1,6 +1,7 @@
 package org.sopt.server.security.jwt;
 
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.application.port.out.TokenProvider;
 import org.sopt.server.domain.exception.AuthErrorCode;
 import org.sopt.server.domain.exception.BaseException;
@@ -9,12 +10,9 @@ import org.sopt.server.security.jwt.JwtCodec.VerifiedToken;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class JwtProvider implements TokenProvider, AccessTokenResolver {
   private final JwtCodec jwtCodec;
-
-  public JwtProvider(JwtCodec jwtCodec) {
-    this.jwtCodec = jwtCodec;
-  }
 
   @Override
   public String createAccessToken(long memberId) {
