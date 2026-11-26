@@ -1,6 +1,7 @@
 package org.sopt.server.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sopt.server.application.port.in.AuthTokens;
 import org.sopt.server.application.port.out.MemberRepository;
+import org.sopt.server.application.port.out.RefreshTokenRepository;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.exception.AuthErrorCode;
 import org.sopt.server.domain.exception.BaseException;
@@ -29,12 +32,14 @@ class AuthServiceTest {
   @Autowired private AuthService authService;
   @Autowired private MemberService memberService;
   @Autowired private MemberRepository memberRepository;
+  @Autowired private RefreshTokenRepository refreshTokenRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private JwtProvider jwtProvider;
   @Autowired private JdbcTemplate jdbcTemplate;
 
   @AfterEach
   void tearDown() {
+    jdbcTemplate.update("delete from refresh_token");
     jdbcTemplate.update("delete from post");
     jdbcTemplate.update("delete from member");
   }
@@ -90,9 +95,84 @@ class AuthServiceTest {
   void login() {
     long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
 
-    String token = authService.login(EMAIL, PASSWORD);
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
 
-    assertEquals(id, jwtProvider.getMemberId(token));
+    assertEquals(id, jwtProvider.getMemberId(tokens.accessToken()));
+    assertEquals(id, jwtProvider.parseRefreshToken(tokens.refreshToken()).memberId());
+    assertEquals(1, refreshTokenRepository.count());
+  }
+
+  @Test
+  @DisplayName("Refresh Token으로 재발급하면 새 토큰 쌍을 발급하고 사용한 Refresh Token은 폐기한다")
+  void reissue() {
+    long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
+
+    AuthTokens reissued = authService.reissue(tokens.refreshToken());
+
+    assertEquals(id, jwtProvider.getMemberId(reissued.accessToken()));
+    assertNotEquals(tokens.refreshToken(), reissued.refreshToken());
+    assertFalse(
+        refreshTokenRepository.existsByJti(
+            jwtProvider.parseRefreshToken(tokens.refreshToken()).jti()));
+    assertTrue(
+        refreshTokenRepository.existsByJti(
+            jwtProvider.parseRefreshToken(reissued.refreshToken()).jti()));
+  }
+
+  @Test
+  @DisplayName("이미 사용한 Refresh Token을 재사용하면 해당 회원의 모든 Refresh Token을 폐기한다")
+  void reissueWithReusedToken() {
+    authService.signup(NAME, EMAIL, PASSWORD);
+    AuthTokens otherDevice = authService.login(EMAIL, PASSWORD);
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
+    AuthTokens reissued = authService.reissue(tokens.refreshToken());
+
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(tokens.refreshToken()));
+
+    assertEquals(0, refreshTokenRepository.count());
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(reissued.refreshToken()));
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN,
+        () -> authService.reissue(otherDevice.refreshToken()));
+  }
+
+  @Test
+  @DisplayName("Access Token이나 형식이 잘못된 토큰으로는 재발급할 수 없다")
+  void reissueWithInvalidToken() {
+    authService.signup(NAME, EMAIL, PASSWORD);
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
+
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(tokens.accessToken()));
+    assertErrorCode(AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue("invalid"));
+    assertErrorCode(AuthErrorCode.REFRESH_TOKEN_REQUIRED, () -> authService.reissue(null));
+  }
+
+  @Test
+  @DisplayName("탈퇴한 회원의 Refresh Token으로는 재발급할 수 없다")
+  void reissueByDeletedMember() {
+    long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
+    memberService.deleteMember(id);
+
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(tokens.refreshToken()));
+  }
+
+  @Test
+  @DisplayName("로그아웃하면 Refresh Token이 폐기되어 재발급할 수 없다")
+  void logout() {
+    authService.signup(NAME, EMAIL, PASSWORD);
+    AuthTokens tokens = authService.login(EMAIL, PASSWORD);
+
+    authService.logout(tokens.refreshToken());
+
+    assertEquals(0, refreshTokenRepository.count());
+    assertErrorCode(
+        AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(tokens.refreshToken()));
   }
 
   @Test

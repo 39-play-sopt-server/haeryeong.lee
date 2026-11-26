@@ -14,4 +14,9 @@ cors:
 
 jwt:
   secret: b2aQIy+xHJTlvXqH40V79BX/C4O1TEsT+/BpLQaTiCA=
+  issuer: sopt-assignment
   access-token-expiration: 1800000
+  refresh-token-expiration: 1209600000
+  refresh-cookie:
+    secure: true
+    same-site: Strict
