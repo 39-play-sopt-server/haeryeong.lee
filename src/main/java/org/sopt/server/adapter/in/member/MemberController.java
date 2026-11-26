@@ -6,7 +6,6 @@ import org.sopt.server.application.port.in.MemberUseCase;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,9 +25,9 @@ public class MemberController implements MemberApi {
   }
 
   @Override
-  @DeleteMapping("/{id}")
-  public BaseResponse<Void> deleteMember(@PathVariable long id) {
-    memberUseCase.deleteMember(id);
+  @DeleteMapping("/me")
+  public BaseResponse<Void> deleteMe(@AuthenticationPrincipal Long memberId) {
+    memberUseCase.deleteMember(memberId);
     return BaseResponse.success(null);
   }
 }

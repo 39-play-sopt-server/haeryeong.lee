@@ -104,6 +104,10 @@ public class Post extends BaseEntity {
     }
   }
 
+  public boolean isWrittenBy(long memberId) {
+    return this.author.getId() == memberId;
+  }
+
   private void validateAuthor(Member author) {
     if (author == null) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);

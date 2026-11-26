@@ -10,6 +10,7 @@ import org.sopt.server.adapter.in.post.dto.PostUpdateRequest;
 import org.sopt.server.application.port.in.PostUseCase;
 import org.sopt.server.domain.Category;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,9 +38,10 @@ public class PostController implements PostApi {
   @Override
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public BaseResponse<Void> createPost(@RequestBody PostCreateRequest request) {
+  public BaseResponse<Void> createPost(
+      @AuthenticationPrincipal Long memberId, @RequestBody PostCreateRequest request) {
     postUseCase.createPost(
-        request.title(), request.content(), Category.from(request.category()), request.memberId());
+        request.title(), request.content(), Category.from(request.category()), memberId);
     return BaseResponse.success(null);
   }
 
@@ -59,16 +61,19 @@ public class PostController implements PostApi {
   @Override
   @PutMapping("/{id}")
   public BaseResponse<Void> updatePost(
-      @PathVariable long id, @RequestBody PostUpdateRequest request) {
+      @AuthenticationPrincipal Long memberId,
+      @PathVariable long id,
+      @RequestBody PostUpdateRequest request) {
     postUseCase.updatePost(
-        id, request.title(), request.content(), Category.from(request.category()));
+        id, memberId, request.title(), request.content(), Category.from(request.category()));
     return BaseResponse.success(null);
   }
 
   @Override
   @DeleteMapping("/{id}")
-  public BaseResponse<Void> deletePost(@PathVariable long id) {
-    postUseCase.deletePost(id);
+  public BaseResponse<Void> deletePost(
+      @AuthenticationPrincipal Long memberId, @PathVariable long id) {
+    postUseCase.deletePost(id, memberId);
     return BaseResponse.success(null);
   }
 }

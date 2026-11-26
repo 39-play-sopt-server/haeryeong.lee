@@ -55,14 +55,23 @@ public class PostService implements PostUseCase {
   }
 
   @Override
-  public void updatePost(long id, String title, String content, Category category) {
-    Post post = findPostForUpdate(id);
+  public void updatePost(
+      long id, long memberId, String title, String content, Category category) {
+    Post post = findOwnPostForUpdate(id, memberId);
     post.update(title, content, category);
   }
 
   @Override
-  public void deletePost(long id) {
-    findPostForUpdate(id).delete();
+  public void deletePost(long id, long memberId) {
+    findOwnPostForUpdate(id, memberId).delete();
+  }
+
+  private Post findOwnPostForUpdate(long id, long memberId) {
+    Post post = findPostForUpdate(id);
+    if (!post.isWrittenBy(memberId)) {
+      throw new BaseException(PostErrorCode.NOT_POST_AUTHOR);
+    }
+    return post;
   }
 
   private Post findPostForUpdate(long id) {

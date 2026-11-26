@@ -24,6 +24,7 @@ public class GlobalExceptionHandler {
         switch (errorCode.getType()) {
           case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
           case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+          case FORBIDDEN -> HttpStatus.FORBIDDEN;
           case NOT_FOUND -> HttpStatus.NOT_FOUND;
           case CONFLICT -> HttpStatus.CONFLICT;
           case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;

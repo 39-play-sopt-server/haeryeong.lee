@@ -14,9 +14,9 @@ import org.sopt.server.adapter.in.post.dto.PostUpdateRequest;
 public interface PostApi {
   @Operation(summary = "게시글 작성")
   @ApiResponse(responseCode = "201", description = "작성 성공")
-  @ApiResponse(responseCode = "400", description = "제목/내용/작성자 누락, 길이 초과 또는 잘못된 카테고리")
-  @ApiResponse(responseCode = "404", description = "존재하지 않는 회원")
-  BaseResponse<Void> createPost(PostCreateRequest request);
+  @ApiResponse(responseCode = "400", description = "제목/내용 누락, 길이 초과 또는 잘못된 카테고리")
+  @ApiResponse(responseCode = "404", description = "탈퇴한 회원")
+  BaseResponse<Void> createPost(@Parameter(hidden = true) Long memberId, PostCreateRequest request);
 
   @Operation(summary = "게시글 목록 조회", description = "생성일 기준 최신순으로 페이지 단위로 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
@@ -33,12 +33,18 @@ public interface PostApi {
   @Operation(summary = "게시글 수정")
   @ApiResponse(responseCode = "200", description = "수정 성공")
   @ApiResponse(responseCode = "400", description = "제목/내용 누락, 길이 초과 또는 잘못된 카테고리")
+  @ApiResponse(responseCode = "403", description = "작성자가 아님")
   @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글")
   BaseResponse<Void> updatePost(
-      @Parameter(description = "게시글 ID", example = "1") long id, PostUpdateRequest request);
+      @Parameter(hidden = true) Long memberId,
+      @Parameter(description = "게시글 ID", example = "1") long id,
+      PostUpdateRequest request);
 
   @Operation(summary = "게시글 삭제")
   @ApiResponse(responseCode = "200", description = "삭제 성공")
+  @ApiResponse(responseCode = "403", description = "작성자가 아님")
   @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글")
-  BaseResponse<Void> deletePost(@Parameter(description = "게시글 ID", example = "1") long id);
+  BaseResponse<Void> deletePost(
+      @Parameter(hidden = true) Long memberId,
+      @Parameter(description = "게시글 ID", example = "1") long id);
 }
