@@ -26,7 +26,7 @@ import org.sopt.server.domain.exception.AuthErrorCode;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.ErrorCode;
 import org.sopt.server.domain.exception.MemberErrorCode;
-import org.sopt.server.security.JwtProvider;
+import org.sopt.server.security.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -85,7 +85,7 @@ class AuthServiceTest {
 
     assertNotEquals(id, newId);
     AuthTokens tokens = authService.login(EMAIL, "new-password1");
-    assertEquals(newId, jwtProvider.getMemberId(tokens.accessToken()));
+    assertEquals(newId, jwtProvider.resolveMemberId(tokens.accessToken()).orElseThrow());
   }
 
   @Test
@@ -110,7 +110,7 @@ class AuthServiceTest {
 
     AuthTokens tokens = authService.login(EMAIL, PASSWORD);
 
-    assertEquals(id, jwtProvider.getMemberId(tokens.accessToken()));
+    assertEquals(id, jwtProvider.resolveMemberId(tokens.accessToken()).orElseThrow());
     assertEquals(id, jwtProvider.parseRefreshToken(tokens.refreshToken()).memberId());
     assertEquals(1, refreshTokenRepository.count());
   }
@@ -123,7 +123,7 @@ class AuthServiceTest {
 
     AuthTokens reissued = authService.reissue(tokens.refreshToken());
 
-    assertEquals(id, jwtProvider.getMemberId(reissued.accessToken()));
+    assertEquals(id, jwtProvider.resolveMemberId(reissued.accessToken()).orElseThrow());
     assertNotEquals(tokens.refreshToken(), reissued.refreshToken());
     assertFalse(
         refreshTokenRepository.existsByJti(

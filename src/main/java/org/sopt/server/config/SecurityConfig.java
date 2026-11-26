@@ -2,7 +2,7 @@ package org.sopt.server.config;
 
 import org.sopt.server.security.JwtAuthenticationEntryPoint;
 import org.sopt.server.security.JwtAuthenticationFilter;
-import org.sopt.server.security.JwtProvider;
+import org.sopt.server.security.jwt.AccessTokenResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,12 +29,13 @@ public class SecurityConfig {
     "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error"
   };
 
-  private final JwtProvider jwtProvider;
+  private final AccessTokenResolver accessTokenResolver;
   private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
   public SecurityConfig(
-      JwtProvider jwtProvider, JwtAuthenticationEntryPoint authenticationEntryPoint) {
-    this.jwtProvider = jwtProvider;
+      AccessTokenResolver accessTokenResolver,
+      JwtAuthenticationEntryPoint authenticationEntryPoint) {
+    this.accessTokenResolver = accessTokenResolver;
     this.authenticationEntryPoint = authenticationEntryPoint;
   }
 
@@ -61,7 +62,7 @@ public class SecurityConfig {
                     .authenticated())
         .exceptionHandling(e -> e.authenticationEntryPoint(authenticationEntryPoint))
         .addFilterBefore(
-            new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+            new JwtAuthenticationFilter(accessTokenResolver), UsernamePasswordAuthenticationFilter.class)
         .build();
   }
 

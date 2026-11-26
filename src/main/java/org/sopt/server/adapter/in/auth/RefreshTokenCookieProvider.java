@@ -1,7 +1,7 @@
 package org.sopt.server.adapter.in.auth;
 
 import java.time.Duration;
-import org.springframework.beans.factory.annotation.Value;
+import org.sopt.server.security.jwt.JwtProperties;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +14,10 @@ public class RefreshTokenCookieProvider {
   private final boolean secure;
   private final String sameSite;
 
-  public RefreshTokenCookieProvider(
-      @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration,
-      @Value("${jwt.refresh-cookie.secure}") boolean secure,
-      @Value("${jwt.refresh-cookie.same-site}") String sameSite) {
-    this.maxAge = Duration.ofMillis(refreshTokenExpiration);
-    this.secure = secure;
-    this.sameSite = sameSite;
+  public RefreshTokenCookieProvider(JwtProperties properties) {
+    this.maxAge = properties.refreshTokenExpiration();
+    this.secure = properties.refreshCookie().secure();
+    this.sameSite = properties.refreshCookie().sameSite();
   }
 
   public ResponseCookie create(String refreshToken) {

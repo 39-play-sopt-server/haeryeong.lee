@@ -11,11 +11,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.servlet.http.Cookie;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.sopt.server.security.jwt.JwtCodec;
+import org.sopt.server.security.jwt.JwtProperties;
+import org.sopt.server.security.jwt.TokenType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
@@ -35,11 +41,7 @@ class AuthenticationTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private JdbcTemplate jdbcTemplate;
 
-  @Value("${jwt.secret}")
-  private String secret;
-
-  @Value("${jwt.issuer}")
-  private String issuer;
+  @Autowired private JwtProperties jwtProperties;
 
   @AfterEach
   void tearDown() {
@@ -133,7 +135,9 @@ class AuthenticationTest {
   void expiredToken() throws Exception {
     signup();
     long memberId = jdbcTemplate.queryForObject("select id from member", Long.class);
-    String expired = new JwtProvider(secret, issuer, -1000L, 1000L).createAccessToken(memberId);
+    Clock anHourAgo = Clock.fixed(Instant.now().minus(Duration.ofHours(1)), ZoneOffset.UTC);
+    String expired =
+        new JwtCodec(jwtProperties, anHourAgo).issue(TokenType.ACCESS, memberId).value();
 
     expectUnauthorized(
         mockMvc.perform(
