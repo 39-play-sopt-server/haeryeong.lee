@@ -6,6 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
 class AuthServiceTest {
@@ -33,7 +40,7 @@ class AuthServiceTest {
   @Autowired private MemberService memberService;
   @Autowired private MemberRepository memberRepository;
   @Autowired private RefreshTokenRepository refreshTokenRepository;
-  @Autowired private PasswordEncoder passwordEncoder;
+  @MockitoSpyBean private PasswordEncoder passwordEncoder;
   @Autowired private JwtProvider jwtProvider;
   @Autowired private JdbcTemplate jdbcTemplate;
 
@@ -183,6 +190,18 @@ class AuthServiceTest {
     assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login("none@sopt.org", PASSWORD));
     assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login(EMAIL, "wrong-password"));
     assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login(EMAIL, null));
+  }
+
+  @Test
+  @DisplayName("가입되지 않은 이메일이나 비밀번호 누락에도 비밀번호 해시 비교를 수행해 응답 시간으로 가입 여부를 드러내지 않는다")
+  void loginComparesHashEvenWhenEmailNotFound() {
+    clearInvocations(passwordEncoder);
+
+    assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login("none@sopt.org", PASSWORD));
+    verify(passwordEncoder, times(1)).matches(eq(PASSWORD), anyString());
+
+    assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login("none@sopt.org", null));
+    verify(passwordEncoder, times(1)).matches(eq(""), anyString());
   }
 
   @Test

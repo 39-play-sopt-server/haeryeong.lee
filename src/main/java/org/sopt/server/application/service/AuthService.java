@@ -1,6 +1,8 @@
 package org.sopt.server.application.service;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.sopt.server.application.port.in.AuthTokens;
 import org.sopt.server.application.port.in.AuthUseCase;
 import org.sopt.server.application.port.out.MemberRepository;
@@ -25,6 +27,7 @@ public class AuthService implements AuthUseCase {
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
   private final TokenProvider tokenProvider;
+  private final String dummyPasswordHash;
 
   public AuthService(
       MemberRepository memberRepository,
@@ -35,6 +38,7 @@ public class AuthService implements AuthUseCase {
     this.refreshTokenRepository = refreshTokenRepository;
     this.passwordEncoder = passwordEncoder;
     this.tokenProvider = tokenProvider;
+    this.dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
   }
 
   @Override
@@ -54,15 +58,15 @@ public class AuthService implements AuthUseCase {
 
   @Override
   public AuthTokens login(String email, String password) {
-    Member member =
-        memberRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new BaseException(AuthErrorCode.LOGIN_FAILED));
+    Optional<Member> found = memberRepository.findByEmail(email);
+    String encodedPassword = found.map(Member::getPassword).orElse(dummyPasswordHash);
+    boolean matched = passwordEncoder.matches(password == null ? "" : password, encodedPassword);
 
-    if (password == null || !passwordEncoder.matches(password, member.getPassword())) {
+    if (found.isEmpty() || password == null || !matched) {
       throw new BaseException(AuthErrorCode.LOGIN_FAILED);
     }
 
+    Member member = found.get();
     refreshTokenRepository.deleteExpiredByMemberId(member.getId(), Instant.now());
     return issueTokens(member.getId());
   }
