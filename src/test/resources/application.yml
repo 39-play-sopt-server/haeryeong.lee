@@ -17,6 +17,7 @@ jwt:
   issuer: sopt-assignment
   access-token-expiration: 1800000
   refresh-token-expiration: 1209600000
+  refresh-token-cleanup-cron: "-"
   refresh-cookie:
     secure: true
     same-site: Strict

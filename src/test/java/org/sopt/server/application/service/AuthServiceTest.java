@@ -12,6 +12,8 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.sopt.server.application.port.in.AuthTokens;
 import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.RefreshTokenRepository;
 import org.sopt.server.domain.Member;
+import org.sopt.server.domain.RefreshToken;
 import org.sopt.server.domain.exception.AuthErrorCode;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.ErrorCode;
@@ -211,6 +214,25 @@ class AuthServiceTest {
     memberService.deleteMember(id);
 
     assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login(EMAIL, PASSWORD));
+  }
+
+  @Test
+  @DisplayName("만료된 Refresh Token만 일괄 삭제한다")
+  void deleteExpiredRefreshTokens() {
+    long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
+    AuthTokens valid = authService.login(EMAIL, PASSWORD);
+    refreshTokenRepository.save(
+        new RefreshToken(id, UUID.randomUUID().toString(), Instant.now().minusSeconds(1)));
+    refreshTokenRepository.save(
+        new RefreshToken(id, UUID.randomUUID().toString(), Instant.now().minusSeconds(60)));
+
+    int deleted = authService.deleteExpiredRefreshTokens();
+
+    assertEquals(2, deleted);
+    assertEquals(1, refreshTokenRepository.count());
+    assertTrue(
+        refreshTokenRepository.existsByJti(
+            jwtProvider.parseRefreshToken(valid.refreshToken()).jti()));
   }
 
   private void assertErrorCode(ErrorCode expected, Runnable action) {

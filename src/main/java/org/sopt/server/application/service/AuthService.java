@@ -110,6 +110,11 @@ public class AuthService implements AuthUseCase {
     refreshTokenRepository.deleteAllByMemberId(memberId);
   }
 
+  @Override
+  public int deleteExpiredRefreshTokens() {
+    return refreshTokenRepository.deleteAllExpired(Instant.now());
+  }
+
   private AuthTokens issueTokens(long memberId) {
     IssuedRefreshToken refreshToken = tokenProvider.createRefreshToken(memberId);
     refreshTokenRepository.save(
