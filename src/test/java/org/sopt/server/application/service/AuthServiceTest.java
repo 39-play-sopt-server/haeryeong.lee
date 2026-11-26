@@ -79,7 +79,7 @@ class AuthServiceTest {
   @DisplayName("탈퇴한 회원의 이메일로 다시 가입하면 새 회원으로 가입되고 로그인할 수 있다")
   void signupWithWithdrawnMemberEmail() {
     long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
-    memberService.deleteMember(id);
+    memberService.withdraw(id, PASSWORD);
 
     long newId = authService.signup(NAME, EMAIL, "new-password1").getId();
 
@@ -169,7 +169,7 @@ class AuthServiceTest {
   void reissueByDeletedMember() {
     long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
     AuthTokens tokens = authService.login(EMAIL, PASSWORD);
-    memberService.deleteMember(id);
+    memberService.withdraw(id, PASSWORD);
 
     assertErrorCode(
         AuthErrorCode.INVALID_REFRESH_TOKEN, () -> authService.reissue(tokens.refreshToken()));
@@ -214,7 +214,7 @@ class AuthServiceTest {
   @DisplayName("탈퇴한 회원은 로그인할 수 없다")
   void loginDeletedMember() {
     long id = authService.signup(NAME, EMAIL, PASSWORD).getId();
-    memberService.deleteMember(id);
+    memberService.withdraw(id, PASSWORD);
 
     assertErrorCode(AuthErrorCode.LOGIN_FAILED, () -> authService.login(EMAIL, PASSWORD));
   }

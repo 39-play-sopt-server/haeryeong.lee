@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -115,7 +116,7 @@ class AuthorizationTest {
         .andExpect(status().isOk());
 
     mockMvc
-        .perform(delete("/api/v1/members/me").header(HttpHeaders.AUTHORIZATION, bearer(otherToken)))
+        .perform(withdraw(otherToken, PASSWORD))
         .andExpect(status().isOk());
 
     mockMvc
@@ -183,7 +184,7 @@ class AuthorizationTest {
   @DisplayName("회원 탈퇴 시 Refresh Token 쿠키를 삭제하고 DB의 Refresh Token도 폐기한다")
   void withdrawalExpiresRefreshCookie() throws Exception {
     mockMvc
-        .perform(delete("/api/v1/members/me").header(HttpHeaders.AUTHORIZATION, bearer(writerToken)))
+        .perform(withdraw(writerToken, PASSWORD))
         .andExpect(status().isOk())
         .andExpect(cookie().maxAge("refresh_token", 0))
         .andExpect(cookie().path("refresh_token", "/api/v1/auth"));
@@ -196,6 +197,34 @@ class AuthorizationTest {
 
   private void expectUnauthorized(ResultActions result) throws Exception {
     result.andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("AUTH-E001"));
+  }
+
+  @Test
+  @DisplayName("탈퇴 시 비밀번호가 틀리면 400을 응답하고 회원과 토큰은 그대로 유지된다")
+  void withdrawWithWrongPassword() throws Exception {
+    mockMvc
+        .perform(withdraw(writerToken, "wrong-password"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("MEMBER-E008"));
+
+    mockMvc
+        .perform(get("/api/v1/members/me").header(HttpHeaders.AUTHORIZATION, bearer(writerToken)))
+        .andExpect(status().isOk());
+    assertEquals(
+        1L,
+        jdbcTemplate.queryForObject(
+            "select count(*) from refresh_token where member_id = ?", Long.class, writerId));
+  }
+
+  private MockHttpServletRequestBuilder withdraw(String token, String password) {
+    return delete("/api/v1/members/me")
+        .header(HttpHeaders.AUTHORIZATION, bearer(token))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(
+            """
+            {"password": "%s"}
+            """
+                .formatted(password));
   }
 
   private void signup(String name, String email) throws Exception {

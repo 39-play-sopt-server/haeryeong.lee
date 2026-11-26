@@ -5,5 +5,5 @@ import org.sopt.server.domain.Member;
 public interface MemberUseCase {
   Member getMember(long id);
 
-  void deleteMember(long id);
+  void withdraw(long id, String password);
 }

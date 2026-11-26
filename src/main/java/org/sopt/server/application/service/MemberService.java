@@ -7,6 +7,7 @@ import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.MemberErrorCode;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +17,17 @@ public class MemberService implements MemberUseCase {
   private final MemberRepository memberRepository;
   private final PostRepository postRepository;
   private final AuthUseCase authUseCase;
+  private final PasswordEncoder passwordEncoder;
 
   public MemberService(
-      MemberRepository memberRepository, PostRepository postRepository, AuthUseCase authUseCase) {
+      MemberRepository memberRepository,
+      PostRepository postRepository,
+      AuthUseCase authUseCase,
+      PasswordEncoder passwordEncoder) {
     this.memberRepository = memberRepository;
     this.postRepository = postRepository;
     this.authUseCase = authUseCase;
+    this.passwordEncoder = passwordEncoder;
   }
 
   @Override
@@ -31,8 +37,11 @@ public class MemberService implements MemberUseCase {
   }
 
   @Override
-  public void deleteMember(long id) {
+  public void withdraw(long id, String password) {
     Member member = findMember(id);
+    if (password == null || !passwordEncoder.matches(password, member.getPassword())) {
+      throw new BaseException(MemberErrorCode.PASSWORD_MISMATCH);
+    }
     member.withdraw();
     postRepository.deleteAllByAuthor(member, member.getDeletedAt());
     authUseCase.revokeAllRefreshTokens(id);

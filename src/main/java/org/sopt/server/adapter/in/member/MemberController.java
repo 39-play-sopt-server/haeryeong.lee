@@ -3,12 +3,14 @@ package org.sopt.server.adapter.in.member;
 import org.sopt.server.adapter.in.auth.RefreshTokenCookieProvider;
 import org.sopt.server.adapter.in.common.BaseResponse;
 import org.sopt.server.adapter.in.member.dto.MemberResponse;
+import org.sopt.server.adapter.in.member.dto.WithdrawRequest;
 import org.sopt.server.application.port.in.MemberUseCase;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,8 +34,9 @@ public class MemberController implements MemberApi {
 
   @Override
   @DeleteMapping("/me")
-  public ResponseEntity<BaseResponse<Void>> deleteMe(@AuthenticationPrincipal Long memberId) {
-    memberUseCase.deleteMember(memberId);
+  public ResponseEntity<BaseResponse<Void>> deleteMe(
+      @AuthenticationPrincipal Long memberId, @RequestBody WithdrawRequest request) {
+    memberUseCase.withdraw(memberId, request.password());
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookieProvider.expire().toString())
         .body(BaseResponse.success(null));

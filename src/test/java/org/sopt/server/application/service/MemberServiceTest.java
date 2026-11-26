@@ -26,10 +26,12 @@ import org.sopt.server.domain.exception.MemberErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest
 class MemberServiceTest {
   private static final long NOT_EXIST_ID = Long.MAX_VALUE;
+  private static final String PASSWORD = "password1234";
 
   private final AtomicInteger emailSequence = new AtomicInteger();
 
@@ -39,6 +41,7 @@ class MemberServiceTest {
   @Autowired private PostRepository postRepository;
   @Autowired private RefreshTokenRepository refreshTokenRepository;
   @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private PasswordEncoder passwordEncoder;
 
   @AfterEach
   void tearDown() {
@@ -62,7 +65,7 @@ class MemberServiceTest {
   @DisplayName("삭제된 회원은 조회할 수 없다")
   void getDeletedMember() {
     long id = saveMember("이해령").getId();
-    memberService.deleteMember(id);
+    memberService.withdraw(id, PASSWORD);
 
     BaseException e = assertThrows(BaseException.class, () -> memberService.getMember(id));
 
@@ -78,7 +81,7 @@ class MemberServiceTest {
     postService.createPost("제목", "내용", Category.FREE, author);
     long otherPost = postService.createPost("제목", "내용", Category.FREE, other);
 
-    memberService.deleteMember(author);
+    memberService.withdraw(author, PASSWORD);
 
     assertFalse(memberRepository.existsById(author));
     assertEquals(1, postRepository.count());
@@ -92,7 +95,7 @@ class MemberServiceTest {
     postService.createPost("제목", "내용", Category.FREE, author);
     postService.createPost("제목", "내용", Category.FREE, author);
 
-    memberService.deleteMember(author);
+    memberService.withdraw(author, PASSWORD);
 
     LocalDateTime memberDeletedAt =
         jdbcTemplate.queryForObject(
@@ -108,7 +111,7 @@ class MemberServiceTest {
   @DisplayName("삭제된 회원으로는 게시글을 작성할 수 없다")
   void createPostByDeletedMember() {
     long author = saveMember("작성자").getId();
-    memberService.deleteMember(author);
+    memberService.withdraw(author, PASSWORD);
 
     BaseException e =
         assertThrows(
@@ -122,9 +125,9 @@ class MemberServiceTest {
   @DisplayName("이미 삭제된 회원은 다시 삭제할 수 없다")
   void deleteDeleted() {
     long id = saveMember("작성자").getId();
-    memberService.deleteMember(id);
+    memberService.withdraw(id, PASSWORD);
 
-    BaseException e = assertThrows(BaseException.class, () -> memberService.deleteMember(id));
+    BaseException e = assertThrows(BaseException.class, () -> memberService.withdraw(id, PASSWORD));
 
     assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
   }
@@ -133,7 +136,7 @@ class MemberServiceTest {
   @DisplayName("존재하지 않는 회원을 삭제하면 예외가 발생한다")
   void deleteNotFound() {
     BaseException e =
-        assertThrows(BaseException.class, () -> memberService.deleteMember(NOT_EXIST_ID));
+        assertThrows(BaseException.class, () -> memberService.withdraw(NOT_EXIST_ID, PASSWORD));
 
     assertEquals(MemberErrorCode.MEMBER_NOT_FOUND, e.getErrorCode());
   }
@@ -157,7 +160,7 @@ class MemberServiceTest {
     saveRefreshToken(member);
     saveRefreshToken(other);
 
-    memberService.deleteMember(member);
+    memberService.withdraw(member, PASSWORD);
 
     assertEquals(
         0,
@@ -178,7 +181,7 @@ class MemberServiceTest {
     Member member = saveMember("이해령");
     String email = member.getEmail();
 
-    memberService.deleteMember(member.getId());
+    memberService.withdraw(member.getId(), PASSWORD);
 
     Map<String, Object> row =
         jdbcTemplate.queryForMap(
@@ -192,6 +195,20 @@ class MemberServiceTest {
             "select count(*) from member where email = ?", Long.class, email));
   }
 
+  @Test
+  @DisplayName("비밀번호가 틀리거나 없으면 탈퇴되지 않는다")
+  void withdrawWithWrongPassword() {
+    long id = saveMember("이해령").getId();
+
+    BaseException wrong =
+        assertThrows(BaseException.class, () -> memberService.withdraw(id, "wrong-password"));
+    BaseException missing = assertThrows(BaseException.class, () -> memberService.withdraw(id, null));
+
+    assertEquals(MemberErrorCode.PASSWORD_MISMATCH, wrong.getErrorCode());
+    assertEquals(MemberErrorCode.PASSWORD_MISMATCH, missing.getErrorCode());
+    assertTrue(memberRepository.existsById(id));
+  }
+
   private void saveRefreshToken(long memberId) {
     refreshTokenRepository.save(
         new RefreshToken(memberId, UUID.randomUUID().toString(), Instant.now().plusSeconds(60)));
@@ -199,6 +216,9 @@ class MemberServiceTest {
 
   private Member saveMember(String name) {
     return memberRepository.save(
-        new Member(name, "member" + emailSequence.incrementAndGet() + "@sopt.org", "password"));
+        new Member(
+            name,
+            "member" + emailSequence.incrementAndGet() + "@sopt.org",
+            passwordEncoder.encode(PASSWORD)));
   }
 }
