@@ -156,6 +156,22 @@ class AuthorizationTest {
   }
 
   @Test
+  @DisplayName("게시글 상세 공개 규칙은 숫자 ID 경로에만 적용되고 다른 하위 경로는 인증을 요구한다")
+  void onlyNumericPostDetailIsPublic() throws Exception {
+    long postId = createPost(writerToken);
+
+    mockMvc.perform(get("/api/v1/posts/{id}", postId)).andExpect(status().isOk());
+    mockMvc
+        .perform(get("/api/v1/posts/{id}", postId).queryParam("from", "list"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/posts").queryParam("page", "0")).andExpect(status().isOk());
+
+    expectUnauthorized(mockMvc.perform(get("/api/v1/posts/me")));
+    expectUnauthorized(mockMvc.perform(get("/api/v1/posts/drafts")));
+    expectUnauthorized(mockMvc.perform(get("/api/v1/posts/{id}/comments", postId)));
+  }
+
+  @Test
   @DisplayName("공개 목록에 없는 경로는 auth 하위라도 인증을 요구한다")
   void unknownPathRequiresAuthentication() throws Exception {
     expectUnauthorized(mockMvc.perform(get("/api/v1/auth/login")));

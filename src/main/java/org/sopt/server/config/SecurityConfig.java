@@ -15,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -22,7 +23,8 @@ public class SecurityConfig {
   private static final String[] PUBLIC_POST_PATHS = {
     "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/reissue", "/api/v1/auth/logout"
   };
-  private static final String[] PUBLIC_GET_PATHS = {"/api/v1/posts", "/api/v1/posts/*"};
+  private static final String[] PUBLIC_GET_PATHS = {"/api/v1/posts"};
+  private static final String POST_DETAIL_REGEX = "^/api/v1/posts/\\d+(\\?.*)?$";
   private static final String[] PUBLIC_PATHS = {
     "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error"
   };
@@ -50,6 +52,8 @@ public class SecurityConfig {
                 auth.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
+                    .permitAll()
+                    .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET, POST_DETAIL_REGEX))
                     .permitAll()
                     .requestMatchers(PUBLIC_PATHS)
                     .permitAll()
