@@ -101,6 +101,11 @@ public class AuthService implements AuthUseCase {
     refreshTokenRepository.deleteByJti(claims.jti());
   }
 
+  @Override
+  public void revokeAllRefreshTokens(long memberId) {
+    refreshTokenRepository.deleteAllByMemberId(memberId);
+  }
+
   private AuthTokens issueTokens(long memberId) {
     IssuedRefreshToken refreshToken = tokenProvider.createRefreshToken(memberId);
     refreshTokenRepository.save(

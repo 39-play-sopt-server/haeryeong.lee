@@ -6,16 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
+import org.sopt.server.application.port.out.RefreshTokenRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
+import org.sopt.server.domain.RefreshToken;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.MemberErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +36,13 @@ class MemberServiceTest {
   @Autowired private PostService postService;
   @Autowired private MemberRepository memberRepository;
   @Autowired private PostRepository postRepository;
+  @Autowired private RefreshTokenRepository refreshTokenRepository;
   @Autowired private JdbcTemplate jdbcTemplate;
 
   @AfterEach
   void tearDown() {
     // 소프트 삭제된 데이터는 리포지토리로 조회되지 않으므로 테이블을 직접 비운다
+    jdbcTemplate.update("delete from refresh_token");
     jdbcTemplate.update("delete from post");
     jdbcTemplate.update("delete from member");
   }
@@ -139,6 +145,35 @@ class MemberServiceTest {
     Member member = saveMember(name);
 
     assertEquals(name, memberRepository.findById(member.getId()).orElseThrow().getName());
+  }
+
+  @Test
+  @DisplayName("회원을 삭제하면 그 회원의 Refresh Token만 모두 폐기되고 삭제 시각은 그대로 기록된다")
+  void deleteRevokesRefreshTokens() {
+    long member = saveMember("탈퇴 회원").getId();
+    long other = saveMember("다른 회원").getId();
+    saveRefreshToken(member);
+    saveRefreshToken(member);
+    saveRefreshToken(other);
+
+    memberService.deleteMember(member);
+
+    assertEquals(
+        0,
+        jdbcTemplate.queryForObject(
+            "select count(*) from refresh_token where member_id = ?", Long.class, member));
+    assertEquals(
+        1,
+        jdbcTemplate.queryForObject(
+            "select count(*) from refresh_token where member_id = ?", Long.class, other));
+    assertNotNull(
+        jdbcTemplate.queryForObject(
+            "select deleted_at from member where id = ?", LocalDateTime.class, member));
+  }
+
+  private void saveRefreshToken(long memberId) {
+    refreshTokenRepository.save(
+        new RefreshToken(memberId, UUID.randomUUID().toString(), Instant.now().plusSeconds(60)));
   }
 
   private Member saveMember(String name) {

@@ -10,15 +10,15 @@ import org.springframework.data.repository.query.Param;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
   boolean existsByJti(String jti);
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("delete from RefreshToken r where r.jti = :jti")
   int deleteByJti(@Param("jti") String jti);
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("delete from RefreshToken r where r.memberId = :memberId")
   int deleteAllByMemberId(@Param("memberId") long memberId);
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("delete from RefreshToken r where r.memberId = :memberId and r.expiresAt < :now")
   int deleteExpiredByMemberId(@Param("memberId") long memberId, @Param("now") Instant now);
 }

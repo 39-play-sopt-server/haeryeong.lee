@@ -10,4 +10,6 @@ public interface AuthUseCase {
   AuthTokens reissue(String refreshToken);
 
   void logout(String refreshToken);
+
+  void revokeAllRefreshTokens(long memberId);
 }

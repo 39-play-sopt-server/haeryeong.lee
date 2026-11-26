@@ -1,5 +1,6 @@
 package org.sopt.server.application.service;
 
+import org.sopt.server.application.port.in.AuthUseCase;
 import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
@@ -14,10 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService implements MemberUseCase {
   private final MemberRepository memberRepository;
   private final PostRepository postRepository;
+  private final AuthUseCase authUseCase;
 
-  public MemberService(MemberRepository memberRepository, PostRepository postRepository) {
+  public MemberService(
+      MemberRepository memberRepository, PostRepository postRepository, AuthUseCase authUseCase) {
     this.memberRepository = memberRepository;
     this.postRepository = postRepository;
+    this.authUseCase = authUseCase;
   }
 
   @Override
@@ -31,6 +35,7 @@ public class MemberService implements MemberUseCase {
     Member member = findMember(id);
     member.delete();
     postRepository.deleteAllByAuthor(member, member.getDeletedAt());
+    authUseCase.revokeAllRefreshTokens(id);
   }
 
   private Member findMember(long id) {
