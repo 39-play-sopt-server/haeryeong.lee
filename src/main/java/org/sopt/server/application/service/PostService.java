@@ -1,14 +1,16 @@
 package org.sopt.server.application.service;
 
+import lombok.RequiredArgsConstructor;
+import org.sopt.server.application.event.MemberWithdrawnEvent;
+import org.sopt.server.application.port.in.MemberUseCase;
 import org.sopt.server.application.port.in.PostUseCase;
-import org.sopt.server.application.port.out.MemberRepository;
 import org.sopt.server.application.port.out.PostRepository;
 import org.sopt.server.domain.Category;
 import org.sopt.server.domain.Member;
 import org.sopt.server.domain.Post;
 import org.sopt.server.domain.exception.BaseException;
-import org.sopt.server.domain.exception.MemberErrorCode;
 import org.sopt.server.domain.exception.PostErrorCode;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,18 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PostService implements PostUseCase {
   private static final int MAX_PAGE_SIZE = 100;
   private static final Sort LATEST =
       Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 
   private final PostRepository postRepository;
-  private final MemberRepository memberRepository;
-
-  public PostService(PostRepository postRepository, MemberRepository memberRepository) {
-    this.postRepository = postRepository;
-    this.memberRepository = memberRepository;
-  }
+  private final MemberUseCase memberUseCase;
 
   @Override
   public long createPost(String title, String content, Category category, Long memberId) {
@@ -55,14 +53,23 @@ public class PostService implements PostUseCase {
   }
 
   @Override
-  public void updatePost(long id, String title, String content, Category category) {
-    Post post = findPostForUpdate(id);
+  public void updatePost(
+      long id, long memberId, String title, String content, Category category) {
+    Post post = findOwnPostForUpdate(id, memberId);
     post.update(title, content, category);
   }
 
   @Override
-  public void deletePost(long id) {
-    findPostForUpdate(id).delete();
+  public void deletePost(long id, long memberId) {
+    findOwnPostForUpdate(id, memberId).delete();
+  }
+
+  private Post findOwnPostForUpdate(long id, long memberId) {
+    Post post = findPostForUpdate(id);
+    if (!post.isWrittenBy(memberId)) {
+      throw new BaseException(PostErrorCode.NOT_POST_AUTHOR);
+    }
+    return post;
   }
 
   private Post findPostForUpdate(long id) {
@@ -75,8 +82,11 @@ public class PostService implements PostUseCase {
     if (memberId == null) {
       throw new BaseException(PostErrorCode.AUTHOR_REQUIRED);
     }
-    return memberRepository
-        .findById(memberId)
-        .orElseThrow(() -> new BaseException(MemberErrorCode.MEMBER_NOT_FOUND));
+    return memberUseCase.getMember(memberId);
+  }
+
+  @EventListener
+  public void deleteAllByWithdrawnAuthor(MemberWithdrawnEvent event) {
+    postRepository.deleteAllByAuthorId(event.memberId(), event.withdrawnAt());
   }
 }

@@ -6,17 +6,26 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.regex.Pattern;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.MemberErrorCode;
 
 @Entity
 @SQLRestriction("deleted_at is null")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
   public static final int MAX_NAME_LENGTH = 30;
   public static final int MAX_EMAIL_LENGTH = 100;
   public static final int MIN_PASSWORD_LENGTH = 8;
   public static final int MAX_PASSWORD_LENGTH = 20;
+
+  private static final String WITHDRAWN_NAME = "탈퇴한 회원";
+  private static final String WITHDRAWN_EMAIL_PREFIX = "deleted_";
+  private static final String WITHDRAWN_EMAIL_DOMAIN = "@withdrawn.invalid";
 
   private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
@@ -33,8 +42,6 @@ public class Member extends BaseEntity {
   @Column(nullable = false)
   private String password;
 
-  protected Member() {}
-
   public Member(String name, String email, String password) {
     validateName(name);
     validateEmail(email);
@@ -43,28 +50,19 @@ public class Member extends BaseEntity {
     this.password = password;
   }
 
+  public void withdraw() {
+    this.name = WITHDRAWN_NAME;
+    this.email = WITHDRAWN_EMAIL_PREFIX + this.id + WITHDRAWN_EMAIL_DOMAIN;
+    this.password = "";
+    delete();
+  }
+
   public static void validateRawPassword(String rawPassword) {
     if (rawPassword == null
         || rawPassword.length() < MIN_PASSWORD_LENGTH
         || rawPassword.length() > MAX_PASSWORD_LENGTH) {
       throw new BaseException(MemberErrorCode.PASSWORD_INVALID);
     }
-  }
-
-  public Long getId() {
-    return this.id;
-  }
-
-  public String getName() {
-    return this.name;
-  }
-
-  public String getEmail() {
-    return this.email;
-  }
-
-  public String getPassword() {
-    return this.password;
   }
 
   private void validateName(String name) {

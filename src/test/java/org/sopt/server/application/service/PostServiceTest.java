@@ -143,7 +143,7 @@ class PostServiceTest {
     long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
     long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
-    postService.deletePost(first);
+    postService.deletePost(first, memberId);
 
     Page<Post> page = postService.getPosts(0, 10);
     assertEquals(List.of(second), page.map(Post::getId).getContent());
@@ -172,7 +172,7 @@ class PostServiceTest {
   void update() {
     long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
-    postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE);
+    postService.updatePost(id, memberId, "새 제목", "새 내용", Category.NOTICE);
 
     Post post = postService.getPost(id);
     assertEquals("새 제목", post.getTitle());
@@ -186,7 +186,9 @@ class PostServiceTest {
     BaseException e =
         assertThrows(
             BaseException.class,
-            () -> postService.updatePost(NOT_EXIST_ID, "새 제목", "새 내용", Category.NOTICE));
+            () ->
+                postService.updatePost(
+                    NOT_EXIST_ID, memberId, "새 제목", "새 내용", Category.NOTICE));
 
     assertEquals(PostErrorCode.POST_NOT_FOUND, e.getErrorCode());
   }
@@ -196,7 +198,7 @@ class PostServiceTest {
   void delete() {
     long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
-    postService.deletePost(id);
+    postService.deletePost(id, memberId);
 
     BaseException e = assertThrows(BaseException.class, () -> postService.getPost(id));
     assertEquals(PostErrorCode.POST_NOT_FOUND, e.getErrorCode());
@@ -208,7 +210,7 @@ class PostServiceTest {
   void deleteIsSoft() {
     long id = postService.createPost("제목", "내용", Category.FREE, memberId);
 
-    postService.deletePost(id);
+    postService.deletePost(id, memberId);
 
     Integer deleted =
         jdbcTemplate.queryForObject(
@@ -220,13 +222,13 @@ class PostServiceTest {
   @DisplayName("이미 삭제된 게시글은 수정하거나 다시 삭제할 수 없다")
   void updateOrDeleteDeleted() {
     long id = postService.createPost("제목", "내용", Category.FREE, memberId);
-    postService.deletePost(id);
+    postService.deletePost(id, memberId);
 
     BaseException update =
         assertThrows(
             BaseException.class,
-            () -> postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE));
-    BaseException delete = assertThrows(BaseException.class, () -> postService.deletePost(id));
+            () -> postService.updatePost(id, memberId, "새 제목", "새 내용", Category.NOTICE));
+    BaseException delete = assertThrows(BaseException.class, () -> postService.deletePost(id, memberId));
 
     assertEquals(PostErrorCode.POST_NOT_FOUND, update.getErrorCode());
     assertEquals(PostErrorCode.POST_NOT_FOUND, delete.getErrorCode());
@@ -236,7 +238,7 @@ class PostServiceTest {
   @DisplayName("존재하지 않는 게시글을 삭제하면 예외가 발생한다")
   void deleteNotFound() {
     BaseException e =
-        assertThrows(BaseException.class, () -> postService.deletePost(NOT_EXIST_ID));
+        assertThrows(BaseException.class, () -> postService.deletePost(NOT_EXIST_ID, memberId));
 
     assertEquals(PostErrorCode.POST_NOT_FOUND, e.getErrorCode());
   }
@@ -247,7 +249,7 @@ class PostServiceTest {
     long first = postService.createPost("첫째", "내용", Category.FREE, memberId);
     long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
-    postService.deletePost(first);
+    postService.deletePost(first, memberId);
     long third = postService.createPost("셋째", "내용", Category.FREE, memberId);
 
     assertEquals("둘째", postService.getPost(second).getTitle());
@@ -270,8 +272,8 @@ class PostServiceTest {
     long second = postService.createPost("둘째", "내용", Category.FREE, memberId);
 
     allPosts();
-    postService.updatePost(first, "새 제목", "새 내용", Category.NOTICE);
-    postService.deletePost(second);
+    postService.updatePost(first, memberId, "새 제목", "새 내용", Category.NOTICE);
+    postService.deletePost(second, memberId);
 
     assertEquals(0L, allPosts().get(0).getViewCount());
   }
@@ -294,7 +296,7 @@ class PostServiceTest {
     Post before = postService.getPost(id);
 
     Thread.sleep(10);
-    postService.updatePost(id, "새 제목", "새 내용", Category.NOTICE);
+    postService.updatePost(id, memberId, "새 제목", "새 내용", Category.NOTICE);
 
     Post after = postService.getPost(id);
     assertEquals(before.getCreatedAt(), after.getCreatedAt());
@@ -329,5 +331,25 @@ class PostServiceTest {
     Post post = postService.getPost(id);
     assertEquals(title, post.getTitle());
     assertEquals(content, post.getContent());
+  }
+
+  @Test
+  @DisplayName("작성자가 아니면 게시글을 수정하거나 삭제할 수 없다")
+  void updateAndDeleteByOther() {
+    long id = postService.createPost("제목", "내용", Category.FREE, memberId);
+    long otherId =
+        memberRepository.save(new Member("다른 회원", "other@sopt.org", "password")).getId();
+
+    BaseException update =
+        assertThrows(
+            BaseException.class,
+            () -> postService.updatePost(id, otherId, "새 제목", "새 내용", Category.NOTICE));
+    BaseException delete =
+        assertThrows(BaseException.class, () -> postService.deletePost(id, otherId));
+
+    assertEquals(PostErrorCode.NOT_POST_AUTHOR, update.getErrorCode());
+    assertEquals(PostErrorCode.NOT_POST_AUTHOR, delete.getErrorCode());
+    Post post = postService.getPost(id);
+    assertEquals("제목", post.getTitle());
   }
 }

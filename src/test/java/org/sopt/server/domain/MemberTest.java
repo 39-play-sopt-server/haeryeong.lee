@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -102,5 +103,18 @@ class MemberTest {
         assertThrows(BaseException.class, () -> Member.validateRawPassword(rawPassword));
 
     assertEquals(MemberErrorCode.PASSWORD_INVALID, e.getErrorCode());
+  }
+
+  @Test
+  @DisplayName("탈퇴하면 개인정보를 익명화하고 삭제 시각을 기록한다")
+  void withdraw() {
+    Member member = new Member(NAME, EMAIL, PASSWORD);
+
+    member.withdraw();
+
+    assertEquals("탈퇴한 회원", member.getName());
+    assertTrue(member.getEmail().startsWith("deleted_"));
+    assertEquals("", member.getPassword());
+    assertTrue(member.isDeleted());
   }
 }

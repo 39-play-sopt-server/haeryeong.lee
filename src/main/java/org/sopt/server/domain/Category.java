@@ -1,8 +1,12 @@
 package org.sopt.server.domain;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.PostErrorCode;
 
+@Getter
+@RequiredArgsConstructor
 public enum Category {
   FREE("자유"),
   QUESTION("질문"),
@@ -10,14 +14,6 @@ public enum Category {
   NOTICE("공지");
 
   private final String label;
-
-  Category(String label) {
-    this.label = label;
-  }
-
-  public String getLabel() {
-    return this.label;
-  }
 
   public static Category from(String label) {
     for (Category category : values()) {

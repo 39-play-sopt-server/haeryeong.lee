@@ -5,6 +5,7 @@ spring:
     password:
     driver-class-name: org.h2.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: create-drop
     show-sql: false
@@ -14,4 +15,10 @@ cors:
 
 jwt:
   secret: b2aQIy+xHJTlvXqH40V79BX/C4O1TEsT+/BpLQaTiCA=
+  issuer: sopt-assignment
   access-token-expiration: 1800000
+  refresh-token-expiration: 1209600000
+  refresh-token-cleanup-cron: "-"
+  refresh-cookie:
+    secure: true
+    same-site: Strict

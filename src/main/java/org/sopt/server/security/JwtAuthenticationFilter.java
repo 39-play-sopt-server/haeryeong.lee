@@ -1,50 +1,45 @@
 package org.sopt.server.security;
 
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.sopt.server.security.jwt.AccessTokenResolver;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
-  private final JwtProvider jwtProvider;
-
-  public JwtAuthenticationFilter(JwtProvider jwtProvider) {
-    this.jwtProvider = jwtProvider;
-  }
+  private final AccessTokenResolver accessTokenResolver;
 
   @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
-    String token = resolveToken(request);
-
-    if (token != null) {
-      try {
-        long memberId = jwtProvider.getMemberId(token);
-        UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(memberId, null, List.of());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-      } catch (JwtException | IllegalArgumentException e) {
-      }
-    }
+    resolveToken(request)
+        .flatMap(accessTokenResolver::resolveMemberId)
+        .ifPresent(
+            memberId ->
+                SecurityContextHolder.getContext()
+                    .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(memberId, null, List.of())));
 
     filterChain.doFilter(request, response);
   }
 
-  private String resolveToken(HttpServletRequest request) {
+  private Optional<String> resolveToken(HttpServletRequest request) {
     String header = request.getHeader(HttpHeaders.AUTHORIZATION);
     if (header != null && header.startsWith(BEARER_PREFIX)) {
-      return header.substring(BEARER_PREFIX.length());
+      return Optional.of(header.substring(BEARER_PREFIX.length()));
     }
-    return null;
+    return Optional.empty();
   }
 }

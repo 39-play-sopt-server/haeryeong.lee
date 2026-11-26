@@ -1,7 +1,6 @@
 package org.sopt.server.adapter.in.common;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.sopt.server.domain.exception.BaseException;
 import org.sopt.server.domain.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
@@ -14,9 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-  private static final Logger log = Logger.getLogger(GlobalExceptionHandler.class.getName());
-
   @ExceptionHandler(BaseException.class)
   public ResponseEntity<BaseResponse<Void>> handleBaseException(BaseException e) {
     ErrorCode errorCode = e.getErrorCode();
@@ -24,6 +22,7 @@ public class GlobalExceptionHandler {
         switch (errorCode.getType()) {
           case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
           case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+          case FORBIDDEN -> HttpStatus.FORBIDDEN;
           case NOT_FOUND -> HttpStatus.NOT_FOUND;
           case CONFLICT -> HttpStatus.CONFLICT;
           case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
@@ -46,7 +45,7 @@ public class GlobalExceptionHandler {
         && errorResponse.getStatusCode().is4xxClientError()) {
       return failure(errorResponse.getStatusCode(), GlobalErrorCode.INVALID_REQUEST);
     }
-    log.log(Level.SEVERE, "[UnexpectedException]", e);
+    log.error("[UnexpectedException]", e);
     return failure(HttpStatus.INTERNAL_SERVER_ERROR, GlobalErrorCode.INTERNAL_SERVER_ERROR);
   }
 

@@ -73,7 +73,7 @@ class PostServiceConcurrencyTest {
     List<Runnable> tasks = new ArrayList<>();
     for (long id : ids) {
       tasks.add(() -> postService.getPost(id));
-      tasks.add(() -> postService.deletePost(id));
+      tasks.add(() -> postService.deletePost(id, memberId));
     }
     runConcurrently(tasks);
 

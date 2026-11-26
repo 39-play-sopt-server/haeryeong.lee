@@ -11,7 +11,7 @@ public interface PostUseCase {
 
   Post getPost(long id);
 
-  void updatePost(long id, String title, String content, Category category);
+  void updatePost(long id, long memberId, String title, String content, Category category);
 
-  void deletePost(long id);
+  void deletePost(long id, long memberId);
 }

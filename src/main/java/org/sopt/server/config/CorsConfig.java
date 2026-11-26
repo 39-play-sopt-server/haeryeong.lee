@@ -20,7 +20,7 @@ public class CorsConfig {
     configuration.setAllowedOrigins(allowedOrigins);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
-    configuration.setExposedHeaders(List.of(HttpHeaders.LOCATION));
+    configuration.setExposedHeaders(List.of(HttpHeaders.LOCATION, HttpHeaders.AUTHORIZATION));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(PREFLIGHT_CACHE_SECONDS);
 
